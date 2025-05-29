@@ -15,9 +15,9 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const navigate = useNavigate();
-
   const { isAuthenticated, user, authInitialized } = useAuth();
+
+  const navigate = useNavigate();
 
   // user persistence
   useEffect(() => {

@@ -8,11 +8,11 @@ type LoginProps = {
 };
 
 export default function Login({ userRole }: LoginProps) {
-  const { login } = useAuth();
-
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const { login } = useAuth();
 
   const navigate = useNavigate();
 

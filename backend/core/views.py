@@ -5,15 +5,6 @@ from rest_framework.views import APIView
 from rest_framework import status 
 from .serializers import UserCreateSerializer, UserUpdateSerializer
 
-@api_view(['GET'])
-def hello_world(request):
-    return Response({"message": "Hello, world!"})
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def protected_view(request):
-    return Response({"message": f"Hello, {request.user.username}!"})
-
 class CreateUserView(APIView):
     def post(self, request):
         serializer = UserCreateSerializer(data=request.data)
