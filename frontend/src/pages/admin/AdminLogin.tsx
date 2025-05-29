@@ -3,7 +3,6 @@ import ErrorMessage from "../../components/ErrorMessage";
 import Spinner from "../../components/Spinner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { readUser } from "../../utils/UserCRUD";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -35,6 +34,10 @@ export default function AdminLogin() {
       }
 
       const data = await response.json();
+
+      if (data.user.role !== "admin") {
+        throw new Error("Only super admins can login here");
+      }
 
       login(data.access, data.refresh);
 

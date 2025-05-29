@@ -17,7 +17,7 @@ export default function AdminDashboard() {
 
   const navigate = useNavigate();
 
-  // user persistence
+  // protected page
   useEffect(() => {
     if (authInitialized && !isAuthenticated) {
       navigate("/");
@@ -29,7 +29,9 @@ export default function AdminDashboard() {
     async function fetchUser() {
       const { data } = await readUser();
 
-      console.log(data);
+      if (data.role !== "admin") {
+        navigate("/");
+      }
     }
 
     fetchUser();

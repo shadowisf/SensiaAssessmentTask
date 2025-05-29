@@ -3,6 +3,7 @@ import ErrorMessage from "../../components/ErrorMessage";
 import Spinner from "../../components/Spinner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { readUser } from "../../utils/UserCRUD";
 
 export default function UserLogin() {
   const navigate = useNavigate();
@@ -34,6 +35,10 @@ export default function UserLogin() {
       }
 
       const data = await response.json();
+
+      if (data.user.role !== "user") {
+        throw new Error("Only regular users can login here");
+      }
 
       login(data.access, data.refresh);
 
