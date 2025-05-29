@@ -73,9 +73,9 @@ export async function createUser({
   }
 }
 
-export async function readUser() {
+export async function readSelfUser() {
   try {
-    const response = await fetch("http://localhost:8000/api/readUser/", {
+    const response = await fetch("http://localhost:8000/api/readSelfUser/", {
       method: "GET",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("access")}`,

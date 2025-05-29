@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ErrorMessage from "../../components/ErrorMessage";
 import SuccessMessage from "../../components/SuccessMessage";
-import { createUser, readUser } from "../../utils/UserCRUD";
+import { createUser, readSelfUser } from "../../utils/UserCRUD";
 import Spinner from "../../components/Spinner";
 
 export default function AdminDashboard() {
@@ -24,10 +24,10 @@ export default function AdminDashboard() {
     }
   }, [authInitialized, isAuthenticated]);
 
-  // fetch user
+  // fetch self user
   useEffect(() => {
     async function fetchUser() {
-      const { data } = await readUser();
+      const { data } = await readSelfUser();
 
       if (data.role !== "admin") {
         navigate("/");
@@ -36,6 +36,8 @@ export default function AdminDashboard() {
 
     fetchUser();
   }, []);
+
+  
 
   return (
     <>
@@ -73,6 +75,10 @@ export default function AdminDashboard() {
           >
             Create
           </button>
+        </div>
+
+        <div className="user-management-container">
+          <h1>User Table</h1>
         </div>
       </main>
     </>

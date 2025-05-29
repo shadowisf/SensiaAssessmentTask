@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { readUser } from "../../utils/UserCRUD";
+import { readSelfUser } from "../../utils/UserCRUD";
 import { useNavigate } from "react-router-dom";
 
 export default function UserDashboard() {
@@ -8,7 +8,7 @@ export default function UserDashboard() {
   // fetch user
   useEffect(() => {
     async function fetchUser() {
-      const { data } = await readUser();
+      const { data } = await readSelfUser();
 
       if (data.role !== "user") {
         navigate("/");

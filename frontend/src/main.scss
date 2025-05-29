@@ -101,6 +101,9 @@ nav {
 .dashboard-wrapper {
   max-width: 900px;
   margin: 128px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 128px;
 
   .user-management-container {
     display: flex;
@@ -157,4 +160,8 @@ nav {
   align-items: center;
   justify-content: center;
   height: 100dvh;
+}
+
+* {
+  border: solid 1px red;
 }

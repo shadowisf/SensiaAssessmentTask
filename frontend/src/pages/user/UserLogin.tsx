@@ -3,7 +3,6 @@ import ErrorMessage from "../../components/ErrorMessage";
 import Spinner from "../../components/Spinner";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { readUser } from "../../utils/UserCRUD";
 
 export default function UserLogin() {
   const navigate = useNavigate();

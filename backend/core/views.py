@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework import status 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import CreateUserSerializer, CustomTokenObtainPairSerializer, UpdateUserSerializer, ReadUserSerializer
+from core.models import User
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -19,7 +20,7 @@ class CreateUserView(APIView):
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-class ReadUserView(APIView):
+class ReadSelfUserView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
@@ -27,7 +28,7 @@ class ReadUserView(APIView):
         serializer = ReadUserSerializer(user)
         return Response(serializer.data)
 
-class UpdateUserView(APIView):
+class UpdateSelfUserView(APIView):
     permission_classes = [IsAuthenticated]
     
     def put(self, request):
@@ -38,3 +39,11 @@ class UpdateUserView(APIView):
             serializer.save()
             return Response({"message": "User updated successfully"}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ListUsersView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        users = User.objects.filter(role="user")
+        serializer = ReadUserSerializer(users, many=True)
+        return Response(serializer.data)
