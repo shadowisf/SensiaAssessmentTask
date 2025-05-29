@@ -1,0 +1,105 @@
+body {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: #242424;
+  color: white;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.home-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+
+  .home-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .home-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+
+    a {
+      background-color: #007bff;
+      color: white;
+      padding: 12px 32px;
+      font-size: 16px;
+      border-radius: 4px;
+    }
+  }
+}
+
+a {
+  text-decoration: none;
+  color: white;
+  cursor: pointer;
+}
+
+.login-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  gap: 16px;
+
+  .input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    input {
+      width: 300px;
+    }
+  }
+}
+
+input {
+  border: none;
+  padding: 12px;
+  color: black;
+}
+
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 32px;
+  background-color: rgb(51, 51, 51);
+
+  .right-container {
+    display: flex;
+    gap: 32px;
+  }
+}
+
+.error-message {
+  color: red;
+}
+
+.dashboard-wrapper {
+  max-width: 900px;
+  margin: 128px auto;
+}
