@@ -1,7 +1,7 @@
 import { useState } from "react";
 import ErrorMessage from "../components/ErrorMessage";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/authContext";
+import { useAuth } from "../context/AuthContext";
 
 type LoginProps = {
   userRole: string;

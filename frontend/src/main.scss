@@ -102,4 +102,17 @@ nav {
 .dashboard-wrapper {
   max-width: 900px;
   margin: 128px auto;
+
+  .user-management-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 400px;
+
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+  }
 }
