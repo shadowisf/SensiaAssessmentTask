@@ -9,17 +9,11 @@ import { jwtDecode } from "jwt-decode";
 
 interface DecodedToken {
   exp: number;
-  user_id: number;
-  email: string;
-  username: string;
-  is_superuser?: boolean;
-  first_name?: string;
-  last_name?: string;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: DecodedToken | null;
+  userToken: DecodedToken | null;
   login: (access: string, refresh: string) => void;
   logout: () => void;
   authInitialized: boolean;
@@ -31,10 +25,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authInitialized, setAuthInitialized] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const [user, setUser] = useState<DecodedToken | null>(null);
+  const [userToken, setUserToken] = useState<DecodedToken | null>(null);
 
+  // check if token is expired
   useEffect(() => {
-    async function checkAuth() {
+    async function checkToken() {
       const accessToken = localStorage.getItem("access");
 
       if (accessToken) {
@@ -46,7 +41,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             await refresh();
           } else {
             setIsAuthenticated(true);
-            setUser(decoded);
+            setUserToken(decoded);
           }
         } catch (err) {
           const msg = (err as Error).message;
@@ -60,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    checkAuth();
+    checkToken();
   }, []);
 
   async function refresh() {
@@ -99,7 +94,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const decoded: DecodedToken = jwtDecode(access);
 
-    setUser(decoded);
+    setUserToken(decoded);
     setIsAuthenticated(true);
   }
 
@@ -107,7 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
 
-    setUser(null);
+    setUserToken(null);
     setIsAuthenticated(false);
   }
 
@@ -115,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         isAuthenticated,
-        user,
+        userToken,
         login,
         logout,
         authInitialized,

@@ -3,7 +3,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import ErrorMessage from "../../components/ErrorMessage";
 import SuccessMessage from "../../components/SuccessMessage";
-import { createUser } from "../../utils/UserCRUD";
+import { createUser, readUser } from "../../utils/UserCRUD";
 import Spinner from "../../components/Spinner";
 
 export default function AdminDashboard() {
@@ -23,6 +23,16 @@ export default function AdminDashboard() {
       navigate("/");
     }
   }, [authInitialized, isAuthenticated]);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const { data } = await readUser();
+
+      console.log(data);
+    }
+
+    fetchUser();
+  }, []);
 
   return (
     <>

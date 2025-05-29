@@ -70,25 +70,7 @@ export async function createUser({
   }
 }
 
-type readUserProps = {
-  setUsername: (v: string) => void;
-  setFirstName: (v: string) => void;
-  setLastName: (v: string) => void;
-  setError: (v: string) => void;
-  setLoading: (v: boolean) => void;
-};
-
-export async function readUser({
-  setUsername,
-  setFirstName,
-  setLastName,
-  setError,
-  setLoading,
-}: readUserProps) {
-  setError("");
-
-  setLoading(true);
-
+export async function readUser() {
   try {
     const response = await fetch("http://localhost:8000/api/readUser/", {
       method: "GET",
@@ -103,17 +85,13 @@ export async function readUser({
 
     const data = await response.json();
 
-    setUsername(data.username);
-    setFirstName(data.first_name);
-    setLastName(data.last_name);
+    return { data, error: null };
   } catch (err) {
     const msg = (err as Error).message;
 
     console.error(msg);
 
-    setError(msg);
-  } finally {
-    setLoading(false);
+    return { data: null, error: msg };
   }
 }
 

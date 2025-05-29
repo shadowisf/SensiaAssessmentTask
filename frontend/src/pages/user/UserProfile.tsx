@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ErrorMessage from "../../components/ErrorMessage";
 import SuccessMessage from "../../components/SuccessMessage";
-import { updateUser, readUser } from "../../utils/UserCRUD";
+import { updateUser } from "../../utils/UserCRUD";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Spinner from "../../components/Spinner";
@@ -19,19 +19,11 @@ export default function UserProfile() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // user persistence
+  // protected page
   useEffect(() => {
     if (authInitialized && !isAuthenticated) {
       navigate("/");
     }
-
-    readUser({
-      setUsername,
-      setFirstName,
-      setLastName,
-      setError,
-      setLoading,
-    });
   }, [authInitialized, isAuthenticated]);
 
   return (
@@ -88,19 +80,6 @@ export default function UserProfile() {
             }
           >
             Update
-          </button>
-          <button
-            onClick={() =>
-              readUser({
-                setUsername,
-                setFirstName,
-                setLastName,
-                setError,
-                setLoading,
-              })
-            }
-          >
-            Refresh
           </button>
         </div>
       </main>
