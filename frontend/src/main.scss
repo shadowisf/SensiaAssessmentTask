@@ -10,6 +10,10 @@ body {
   box-sizing: border-box;
 }
 
+h1 {
+  border-bottom: 1px solid white;
+}
+
 button {
   background-color: #007bff;
   color: white;
@@ -87,7 +91,6 @@ nav {
   display: flex;
   justify-content: space-between;
   padding: 32px;
-  background-color: rgb(51, 51, 51);
 
   .right-container {
     display: flex;
@@ -99,13 +102,20 @@ nav {
   max-width: 900px;
   margin: 128px auto;
 
-  .user-management-container {
+  .user-management-container,
+  .user-profile-container {
     display: flex;
     flex-direction: column;
     gap: 32px;
     width: 400px;
 
     .input-container {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .button-container {
       display: flex;
       flex-direction: column;
       gap: 4px;

@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
     
-class UserCreateSerializer(serializers.ModelSerializer):
+class CreateUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
@@ -17,7 +17,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
         
         return user
     
-class UserUpdateSerializer(serializers.ModelSerializer):
+class UserReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "first_name", "last_name", "is_superuser"]
+        read_only_fields = fields
+    
+class UpdateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["username", "first_name", "last_name"]

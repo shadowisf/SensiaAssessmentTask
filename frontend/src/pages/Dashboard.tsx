@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { generateStrongPassword } from "../utils/generateStrongPassword";
 import ErrorMessage from "../components/ErrorMessage";
 import SuccessMessage from "../components/SuccessMessage";
+import { createUser, readUser, updateUser } from "../utils/Dashboard";
 
 export default function Dashboard() {
   const [email, setEmail] = useState("");
@@ -25,69 +25,24 @@ export default function Dashboard() {
       navigate("/");
     }
 
-    if (user?.user_id !== 1) {
-      setUsername(user?.username || "");
-      setFirstName(user?.first_name || "");
-      setLastName(user?.last_name || "");
-    }
+    readUser({
+      setUsername,
+      setFirstName,
+      setLastName,
+      setError,
+    });
   }, [authInitialized, isAuthenticated]);
 
-  async function createUser() {
-    try {
-      const password = generateStrongPassword();
-      const username = email.split("@")[0];
+  useEffect(() => {
+    if (error || success) {
+      const timer = setTimeout(() => {
+        setError("");
+        setSuccess("");
+      }, 3000);
 
-      const response = await fetch("http://localhost:8000/api/createUser/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, username, password }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create user");
-      }
-
-      const data = await response.json();
-
-      setSuccess(data.message);
-      setEmail("");
-    } catch (err) {
-      console.error(err);
-
-      setError("Failed to create user");
+      return () => clearTimeout(timer);
     }
-  }
-
-  async function updateUser() {
-    try {
-      const response = await fetch("http://localhost:8000/api/updateUser/", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          first_name: firstName,
-          last_name: lastName,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update user");
-      }
-
-      const data = await response.json();
-
-      setSuccess(data.message);
-    } catch (err) {
-      console.error(err);
-
-      setError("Failed to update user");
-    }
-  }
+  }, [error, success]);
 
   return (
     <main className="dashboard-wrapper">
@@ -110,14 +65,20 @@ export default function Dashboard() {
             <SuccessMessage>{success}</SuccessMessage>
           ) : null}
 
-          <button onClick={createUser}>Create</button>
+          <button
+            onClick={() =>
+              createUser({ email, setSuccess, setEmail, setError })
+            }
+          >
+            Create
+          </button>
         </div>
       ) : (
-        <div className="user-management-container">
+        <div className="user-profile-container">
           <h1>User Profile</h1>
 
           <div className="input-container">
-            <label>username:</label>
+            <label>Username</label>
             <input
               type="text"
               value={username}
@@ -126,7 +87,7 @@ export default function Dashboard() {
 
             <br />
 
-            <label>first name:</label>
+            <label>First Name</label>
             <input
               type="text"
               value={firstName}
@@ -135,7 +96,7 @@ export default function Dashboard() {
 
             <br />
 
-            <label>last name:</label>
+            <label>Last Name</label>
             <input
               type="text"
               value={lastName}
@@ -149,7 +110,28 @@ export default function Dashboard() {
             <SuccessMessage>{success}</SuccessMessage>
           ) : null}
 
-          <button onClick={updateUser}>Update</button>
+          <div className="button-container">
+            <button
+              onClick={() =>
+                updateUser({
+                  username,
+                  firstName,
+                  lastName,
+                  setSuccess,
+                  setError,
+                })
+              }
+            >
+              Update
+            </button>
+            <button
+              onClick={() =>
+                readUser({ setUsername, setFirstName, setLastName, setError })
+              }
+            >
+              Refresh
+            </button>
+          </div>
         </div>
       )}
     </main>
