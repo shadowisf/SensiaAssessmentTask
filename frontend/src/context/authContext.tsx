@@ -13,6 +13,8 @@ interface DecodedToken {
   email: string;
   username: string;
   is_superuser?: boolean;
+  first_name?: string;
+  last_name?: string;
 }
 
 interface AuthContextType {

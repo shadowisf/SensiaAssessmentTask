@@ -95,10 +95,6 @@ nav {
   }
 }
 
-.error-message {
-  color: red;
-}
-
 .dashboard-wrapper {
   max-width: 900px;
   margin: 128px auto;
@@ -112,7 +108,7 @@ nav {
     .input-container {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 4px;
     }
   }
 }

@@ -3,5 +3,5 @@ type ErrorMessageProps = {
 };
 
 export default function ErrorMessage({ children }: ErrorMessageProps) {
-  return <div className="error-message">{children}</div>;
+  return <p style={{ color: "red" }}>{children}</p>;
 }
