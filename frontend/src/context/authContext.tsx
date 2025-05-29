@@ -28,29 +28,70 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState<DecodedToken | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const [user, setUser] = useState<DecodedToken | null>(null);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("access");
-    if (accessToken) {
-      try {
-        const decoded: DecodedToken = jwtDecode(accessToken);
-        const isExpired = decoded.exp * 1000 < Date.now();
-        if (isExpired) {
+    async function checkAuth() {
+      const accessToken = localStorage.getItem("access");
+
+      if (accessToken) {
+        try {
+          const decoded: DecodedToken = jwtDecode(accessToken);
+          const isExpired = decoded.exp * 1000 < Date.now();
+
+          if (isExpired) {
+            await refresh();
+          } else {
+            setIsAuthenticated(true);
+            setUser(decoded);
+          }
+        } catch (err) {
+          const msg = (err as Error).message;
+
+          console.error(msg);
+
           logout();
-        } else {
-          setIsAuthenticated(true);
-          setUser(decoded);
         }
-      } catch (err) {
-        console.error("Invalid token format:", err);
-        logout();
+
+        setAuthInitialized(true);
       }
     }
-    setAuthInitialized(true); // ✅ mark it initialized
+
+    checkAuth();
   }, []);
+
+  async function refresh() {
+    const refresh = localStorage.getItem("refresh");
+
+    if (refresh) {
+      try {
+        const response = await fetch(
+          "http://localhost:8000/api/token/refresh/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ refresh }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to refresh token");
+        }
+
+        const data = await response.json();
+
+        login(data.access, data.refresh);
+      } catch (err) {
+        const msg = (err as Error).message;
+        console.error(msg);
+      }
+    }
+  }
 
   function login(access: string, refresh: string) {
     localStorage.setItem("access", access);

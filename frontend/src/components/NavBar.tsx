@@ -20,8 +20,8 @@ export default function NavBar() {
           <a onClick={handleLogout}>Logout</a>
         ) : (
           <>
-            <Link to={"/admin-login"}>Admin Login</Link>
-            <Link to={"/user-login"}>User Login</Link>
+            <Link to={"/admin-login"}>Super Admin Login</Link>
+            <Link to={"/user-login"}>Regular User Login</Link>
           </>
         )}
       </div>

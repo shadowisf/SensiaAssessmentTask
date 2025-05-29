@@ -12,8 +12,8 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/admin-login" element={<Login userRole="admin" />} />
-        <Route path="/user-login" element={<Login userRole="user" />} />
+        <Route path="/admin-login" element={<Login userRole="super admin" />} />
+        <Route path="/user-login" element={<Login userRole="regular user" />} />
         <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </>

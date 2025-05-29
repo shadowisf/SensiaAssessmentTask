@@ -102,8 +102,7 @@ nav {
   max-width: 900px;
   margin: 128px auto;
 
-  .user-management-container,
-  .user-profile-container {
+  .user-management-container {
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -121,4 +120,33 @@ nav {
       gap: 4px;
     }
   }
+}
+
+.user-profile-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 400px;
+
+  .input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .button-container {
+    display: flex;
+    gap: 4px;
+  }
+}
+
+.spinner-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-content: center;
+  width: 100%;
+  height: 100dvh;
+  background-color: rgba(0, 0, 0, 0.5);
 }

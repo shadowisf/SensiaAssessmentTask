@@ -1,10 +1,30 @@
-import { generateStrongPassword } from "./generateStrongPassword";
+export function generateStrongPassword(length = 12): string {
+  const charset =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+[]{}|;:,.<>?";
+  let password = "";
+
+  while (true) {
+    password = Array.from(
+      { length },
+      () => charset[Math.floor(Math.random() * charset.length)]
+    ).join("");
+    if (
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password) &&
+      /[^A-Za-z0-9]/.test(password)
+    ) {
+      return password;
+    }
+  }
+}
 
 type createUserProps = {
   email: string;
-  setSuccess: React.Dispatch<React.SetStateAction<string>>;
-  setEmail: React.Dispatch<React.SetStateAction<string>>;
-  setError: React.Dispatch<React.SetStateAction<string>>;
+  setSuccess: (v: string) => void;
+  setEmail: (v: string) => void;
+  setError: (v: string) => void;
+  setLoading: (v: boolean) => void;
 };
 
 export async function createUser({
@@ -12,7 +32,13 @@ export async function createUser({
   setSuccess,
   setEmail,
   setError,
+  setLoading,
 }: createUserProps) {
+  setError("");
+  setSuccess("");
+
+  setLoading(true);
+
   try {
     const password = generateStrongPassword();
     const username = email.split("@")[0];
@@ -39,14 +65,17 @@ export async function createUser({
     console.error(msg);
 
     setError(msg);
+  } finally {
+    setLoading(false);
   }
 }
 
 type readUserProps = {
-  setUsername: React.Dispatch<React.SetStateAction<string>>;
-  setFirstName: React.Dispatch<React.SetStateAction<string>>;
-  setLastName: React.Dispatch<React.SetStateAction<string>>;
-  setError: React.Dispatch<React.SetStateAction<string>>;
+  setUsername: (v: string) => void;
+  setFirstName: (v: string) => void;
+  setLastName: (v: string) => void;
+  setError: (v: string) => void;
+  setLoading: (v: boolean) => void;
 };
 
 export async function readUser({
@@ -54,7 +83,12 @@ export async function readUser({
   setFirstName,
   setLastName,
   setError,
+  setLoading,
 }: readUserProps) {
+  setError("");
+
+  setLoading(true);
+
   try {
     const response = await fetch("http://localhost:8000/api/readUser/", {
       method: "GET",
@@ -78,6 +112,8 @@ export async function readUser({
     console.error(msg);
 
     setError(msg);
+  } finally {
+    setLoading(false);
   }
 }
 
@@ -85,8 +121,9 @@ type updateUserProps = {
   username: string;
   firstName: string;
   lastName: string;
-  setSuccess: React.Dispatch<React.SetStateAction<string>>;
-  setError: React.Dispatch<React.SetStateAction<string>>;
+  setSuccess: (v: string) => void;
+  setError: (v: string) => void;
+  setLoading: (v: boolean) => void;
 };
 
 export async function updateUser({
@@ -95,7 +132,13 @@ export async function updateUser({
   lastName,
   setSuccess,
   setError,
+  setLoading,
 }: updateUserProps) {
+  setError("");
+  setSuccess("");
+
+  setLoading(true);
+
   try {
     const response = await fetch("http://localhost:8000/api/updateUser/", {
       method: "PUT",
@@ -123,5 +166,7 @@ export async function updateUser({
     console.error(msg);
 
     setError(msg);
+  } finally {
+    setLoading(false);
   }
 }

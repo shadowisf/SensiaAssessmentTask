@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ErrorMessage from "../components/ErrorMessage";
+import Spinner from "../components/Spinner";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -8,15 +9,20 @@ type LoginProps = {
 };
 
 export default function Login({ userRole }: LoginProps) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
+  const navigate = useNavigate();
   const { login } = useAuth();
 
-  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleLogin() {
+    setError("");
+
+    setLoading(true);
+
     try {
       const response = await fetch("http://localhost:8000/api/token/", {
         method: "POST",
@@ -36,37 +42,46 @@ export default function Login({ userRole }: LoginProps) {
 
       navigate("/dashboard");
     } catch (err) {
-      setError("Login failed");
-      console.error(err);
+      const msg = (err as Error).message;
+
+      console.error(msg);
+
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   }
 
   return (
-    <main className="login-wrapper">
-      <div>
-        <h1>{userRole.toLocaleUpperCase()} LOGIN</h1>
-      </div>
+    <>
+      {loading && <Spinner />}
 
-      <div className="input-container">
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+      <main className="login-wrapper">
+        <div>
+          <h1>{userRole.toLocaleUpperCase()} LOGIN</h1>
+        </div>
 
-        <br />
+        <div className="input-container">
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
-        {error && <ErrorMessage>{error}</ErrorMessage>}
-      </div>
+          <br />
 
-      <button onClick={handleLogin}>Login</button>
-    </main>
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+        </div>
+
+        <button onClick={handleLogin}>Login</button>
+      </main>
+    </>
   );
 }
