@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import ErrorMessage from "../components/ErrorMessage";
-import SuccessMessage from "../components/SuccessMessage";
-import { updateUser, readUser } from "../utils/UserCRUD";
-import { useAuth } from "../context/AuthContext";
+import ErrorMessage from "../../components/ErrorMessage";
+import SuccessMessage from "../../components/SuccessMessage";
+import { updateUser, readUser } from "../../utils/UserCRUD";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import Spinner from "../components/Spinner";
+import Spinner from "../../components/Spinner";
 
 export default function UserProfile() {
+  const navigate = useNavigate();
+
+  const { isAuthenticated, authInitialized } = useAuth();
+
   const [username, setUsername] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -14,10 +18,6 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  const { isAuthenticated, authInitialized } = useAuth();
-
-  const navigate = useNavigate();
 
   // user persistence
   useEffect(() => {

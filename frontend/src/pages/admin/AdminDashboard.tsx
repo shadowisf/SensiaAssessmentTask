@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import ErrorMessage from "../components/ErrorMessage";
-import SuccessMessage from "../components/SuccessMessage";
-import { createUser } from "../utils/UserCRUD";
-import Spinner from "../components/Spinner";
+import ErrorMessage from "../../components/ErrorMessage";
+import SuccessMessage from "../../components/SuccessMessage";
+import { createUser } from "../../utils/UserCRUD";
+import Spinner from "../../components/Spinner";
 
-export default function Dashboard() {
+export default function AdminDashboard() {
   const [email, setEmail] = useState("");
 
   const [loading, setLoading] = useState(false);

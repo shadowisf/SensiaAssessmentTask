@@ -1,15 +1,12 @@
 import { useState } from "react";
-import ErrorMessage from "../components/ErrorMessage";
-import Spinner from "../components/Spinner";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import ErrorMessage from "../../components/ErrorMessage";
+import Spinner from "../../components/Spinner";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
-type LoginProps = {
-  userRole: string;
-};
-
-export default function Login({ userRole }: LoginProps) {
+export default function UserLogin() {
   const navigate = useNavigate();
+
   const { login } = useAuth();
 
   const [username, setUsername] = useState("");
@@ -40,7 +37,7 @@ export default function Login({ userRole }: LoginProps) {
 
       login(data.access, data.refresh);
 
-      navigate("/dashboard");
+      navigate("/user-dashboard");
     } catch (err) {
       const msg = (err as Error).message;
 
@@ -58,7 +55,7 @@ export default function Login({ userRole }: LoginProps) {
 
       <main className="login-wrapper">
         <div>
-          <h1>{userRole.toLocaleUpperCase()} LOGIN</h1>
+          <h1>REGULAR USER LOGIN</h1>
         </div>
 
         <div className="input-container">
@@ -75,10 +72,10 @@ export default function Login({ userRole }: LoginProps) {
             onChange={(e) => setPassword(e.target.value)}
           />
 
-          <br />
-
           {error && <ErrorMessage>{error}</ErrorMessage>}
         </div>
+
+        <Link to="/reset-password">Reset password</Link>
 
         <button onClick={handleLogin}>Login</button>
       </main>
