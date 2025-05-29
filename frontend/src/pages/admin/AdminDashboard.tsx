@@ -24,6 +24,7 @@ export default function AdminDashboard() {
     }
   }, [authInitialized, isAuthenticated]);
 
+  // fetch user
   useEffect(() => {
     async function fetchUser() {
       const { data } = await readUser();

@@ -3,7 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status 
-from .serializers import CreateUserSerializer, UpdateUserSerializer
+from .serializers import CreateUserSerializer, UpdateUserSerializer, ReadUserSerializer
 
 class CreateUserView(APIView):
     permission_classes = [IsAuthenticated]
@@ -21,7 +21,7 @@ class ReadUserView(APIView):
     
     def get(self, request):
         user = request.user
-        serializer = UpdateUserSerializer(user)
+        serializer = ReadUserSerializer(user)
         return Response(serializer.data)
 
 class UpdateUserView(APIView):

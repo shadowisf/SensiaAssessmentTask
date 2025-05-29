@@ -41,20 +41,23 @@ export async function createUser({
 
   try {
     const password = generateStrongPassword();
-    const username = email.split("@")[0];
+    const full_name = email.split("@")[0];
+    const role = "user";
 
     const response = await fetch("http://localhost:8000/api/createUser/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access")}`,
       },
-      body: JSON.stringify({ email, username, password }),
+      body: JSON.stringify({ email, full_name, password, role }),
     });
 
     if (!response.ok) {
       throw new Error("Failed to create user");
     }
 
+    console.log(password);
     const data = await response.json();
 
     setSuccess(data.message);

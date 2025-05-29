@@ -1,37 +1,35 @@
-from django.contrib.auth.models import User
 from rest_framework import serializers
-    
+from core.models import User
+
 class CreateUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = User
-        fields = ["username", "email", "password"]
+        fields = ["email", "full_name", "password", "role"]
 
-    def create(self, validated_data):         
-        user = User.objects.create_user(
-            username=validated_data["username"],
+    def create(self, validated_data):
+        return User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
+            full_name=validated_data["full_name"],
+            role=validated_data["role"],
         )
-        
-        return user
-    
-class UserReadSerializer(serializers.ModelSerializer):
+
+
+class ReadUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name", "is_superuser", "is_staff"]
+        fields = ["id", "email", "full_name", "role"]
         read_only_fields = fields
-    
+
+
 class UpdateUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["username", "first_name", "last_name"]
-        
+        fields = ["full_name"]
+
     def update(self, instance, validated_data):
-        instance.username = validated_data.get('username', instance.username)
-        instance.first_name = validated_data.get('first_name', instance.first_name)
-        instance.last_name = validated_data.get('last_name', instance.last_name)
-        
+        instance.full_name = validated_data.get("full_name", instance.full_name)
         instance.save()
         return instance
