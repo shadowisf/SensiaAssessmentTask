@@ -144,7 +144,6 @@ export default function UserTable() {
         })
       );
 
-      // Optionally re-fetch access after saving
       setAccess((prev) => {
         const updatedMap = new Map(
           editingAccess
