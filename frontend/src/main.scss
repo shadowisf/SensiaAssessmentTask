@@ -246,7 +246,19 @@ nav {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 8px;
+
+        .comment-actions {
+          display: flex;
+          gap: 8px;
+        }
       }
+    }
+
+    .add-comment-container {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
   }
 }

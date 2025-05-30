@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import Comment from "../components/Comment";
 
 export default function Page() {
   const { pageName } = useParams();
@@ -122,48 +123,27 @@ export default function Page() {
 
             {page.comments.length === 0 && <p>No comments yet.</p>}
 
-            <ul>
-              {page.comments.map((comment: any) => (
-                <li key={comment.id}>
-                  <strong>{comment.author.full_name || "Anonymous"}:</strong>{" "}
-                  {editingCommentId === comment.id ? (
-                    <>
-                      <input
-                        value={editedContent}
-                        onChange={(e) => setEditedContent(e.target.value)}
-                      />
-                      <button onClick={() => handleUpdateComment(comment.id)}>
-                        Save
-                      </button>
-                      <button onClick={() => setEditingCommentId(null)}>
-                        Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      {comment.content}{" "}
-                      <small>
-                        {new Date(comment.created_at).toLocaleString()}
-                      </small>
-                      <button
-                        onClick={() => {
-                          setEditingCommentId(comment.id);
-                          setEditedContent(comment.content);
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button onClick={() => handleDeleteComment(comment.id)}>
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </li>
-              ))}
-            </ul>
+            {page.comments.map((comment: any) => (
+              <Comment
+                key={comment.id}
+                date={new Date(comment.created_at).toLocaleString()}
+                author_name={comment.author.full_name || "Anonymous"}
+                content={comment.content}
+                isEditing={editingCommentId === comment.id}
+                editedContent={editedContent}
+                onChangeEditedContent={(e) => setEditedContent(e.target.value)}
+                onEditClick={() => {
+                  setEditingCommentId(comment.id);
+                  setEditedContent(comment.content);
+                }}
+                onDeleteClick={() => handleDeleteComment(comment.id)}
+                onSaveClick={() => handleUpdateComment(comment.id)}
+                onCancelClick={() => setEditingCommentId(null)}
+              />
+            ))}
 
-            <div>
-              <textarea
+            <div className="add-comment-container">
+              <input
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Add a comment"
