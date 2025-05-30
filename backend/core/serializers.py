@@ -62,9 +62,16 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         return instance
     
 class CommentSerializer(serializers.ModelSerializer):
+    author = ReadUserSerializer(read_only=True)
+    
     class Meta:
         model = Comment
-        fields = ['id', 'author', 'content', 'history']
+        fields = ['id', 'author', 'content', 'history', 'created_at']
+
+    def create(self, validated_data):
+        page = self.context.get('page')
+        author = self.context.get('author')
+        return Comment.objects.create(page=page, author=author, **validated_data)
 
 
 class PageSerializer(serializers.ModelSerializer):
@@ -72,4 +79,4 @@ class PageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Page
-        fields = ['id', 'name', 'content', 'comments']
+        fields = ['id', 'name', 'slug', 'content', 'comments']

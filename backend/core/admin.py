@@ -20,26 +20,25 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ("email",)
     ordering = ("email",)
 
-# --- INLINE COMMENT ADMIN FOR PAGE ---
+
 class CommentInline(admin.TabularInline):
     model = Comment
     extra = 0
     readonly_fields = ("created_at",)
     fields = ("author", "content", "created_at")
 
-# --- PAGE ADMIN ---
+
 class PageAdmin(admin.ModelAdmin):
-    list_display = ("id", "name")
+    list_display = ("id", "name", "slug", "content")
     inlines = [CommentInline]
 
-# --- COMMENT ADMIN ---
+
 class CommentAdmin(admin.ModelAdmin):
     list_display = ("id", "page", "author", "created_at")
     list_filter = ("page", "author")
     search_fields = ("content",)
 
-# Register everything
+
 admin.site.register(Page, PageAdmin)
 admin.site.register(Comment, CommentAdmin)
-
 admin.site.register(User, UserAdmin)

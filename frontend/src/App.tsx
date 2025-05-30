@@ -20,7 +20,7 @@ export default function App() {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
 
-        <Route path="/pages/:pageName" element={<Page />} />
+        <Route path="/page/:pageName" element={<Page />} />
       </Routes>
     </>
   );

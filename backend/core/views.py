@@ -1,11 +1,11 @@
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status 
-from rest_framework_simplejwt.views import TokenObtainPairView
-from .serializers import CreateUserSerializer, CustomTokenObtainPairSerializer, PageSerializer, UpdateUserSerializer, ReadUserSerializer
-from core.models import Page, User
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from django.shortcuts import get_object_or_404
+from core.models import Page, Comment, User
+from core.serializers import CommentSerializer, CustomTokenObtainPairSerializer, PageSerializer, CreateUserSerializer, ReadUserSerializer, UpdateUserSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -46,7 +46,7 @@ class UpdateSelfUserView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class readAllUsersView(APIView):
+class ReadAllUsersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -55,7 +55,7 @@ class readAllUsersView(APIView):
         
         return Response(serializer.data)
     
-class readAllPagesView(APIView):
+class ReadAllPagesView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -64,12 +64,54 @@ class readAllPagesView(APIView):
         
         return Response(serializer.data)
     
-class readPageView(APIView):
+class ReadPageView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, page_name):
-        normalized_name = page_slug.replace('-', ' ').lower()
-        page = get_object_or_404(Page, name__iexact=normalized_name)
+        page = get_object_or_404(Page, slug=page_name)
         serializer = PageSerializer(page)
         
         return Response(serializer.data)
+    
+    
+class CreateCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, page_name):
+        page = get_object_or_404(Page, slug=page_name)
+        serializer = CommentSerializer(data=request.data, context={'page': page, 'author': request.user})
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Comment created successfully"}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UpdateCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, comment_id):
+        comment = get_object_or_404(Comment, id=comment_id)
+
+        if comment.author != request.user:
+            return Response({"detail": "You can only update your own comment."}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = CommentSerializer(comment, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Comment updated successfully"}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class DeleteCommentView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request, comment_id):
+        comment = get_object_or_404(Comment, id=comment_id)
+
+        if comment.author != request.user:
+            return Response({"detail": "You can only delete your own comment."}, status=status.HTTP_403_FORBIDDEN)
+
+        comment.delete()
+        return Response({"message": "Comment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
