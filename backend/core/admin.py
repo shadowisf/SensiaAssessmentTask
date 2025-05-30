@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Page, User, Comment
+from .models import Page, User, Comment, UserPageAccess
 
 class UserAdmin(BaseUserAdmin):
     model = User
@@ -39,6 +39,13 @@ class CommentAdmin(admin.ModelAdmin):
     search_fields = ("content",)
 
 
+class UserPageAccessAdmin(admin.ModelAdmin):
+    list_display = ('user', 'page', 'access_level')
+    list_filter = ('access_level', 'page')
+    search_fields = ('user__email', 'page__name')
+    ordering = ('page', 'user')
+
+admin.site.register(UserPageAccess, UserPageAccessAdmin)
 admin.site.register(Page, PageAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(User, UserAdmin)

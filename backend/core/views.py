@@ -116,12 +116,11 @@ class DeleteCommentView(APIView):
         comment.delete()
         return Response({"message": "Comment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
-class ListPageAccessView(APIView):
+class ReadAllPageAccessView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, slug):
-        page = get_object_or_404(Page, slug=slug)
-        access = UserPageAccess.objects.filter(page=page)
+    def get(self, request):
+        access = UserPageAccess.objects.all()
         serializer = UserAccessSerializer(access, many=True)
         return Response(serializer.data)
     

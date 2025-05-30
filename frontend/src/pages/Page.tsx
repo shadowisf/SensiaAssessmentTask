@@ -1,187 +1,82 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import Comment from "../components/Comment";
-import ErrorMessage from "../components/ErrorMessage";
-import { useAuth } from "../context/AuthContext";
 
-export default function Page() {
-  const navigate = useNavigate();
-
-  const { pageName } = useParams();
-  const { isAuthenticated, authInitialized } = useAuth();
-
-  const [page, setPage] = useState<any | null>(null);
-  const [newComment, setNewComment] = useState("");
-  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
-  const [editedContent, setEditedContent] = useState("");
+export default function UserPageAccessTable() {
+  const [users, setUsers] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [accessList, setAccessList] = useState([]);
   const [error, setError] = useState("");
 
-  // role check
   useEffect(() => {
-    async function fetchSelfUser() {
-      if (authInitialized && !isAuthenticated) {
-        navigate("/");
+    async function fetchAll() {
+      try {
+        const [usersRes, pagesRes, accessRes] = await Promise.all([
+          fetch("http://localhost:8000/api/readAllUsers/", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }),
+          fetch("http://localhost:8000/api/readAllPages/", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }),
+          fetch("http://localhost:8000/api/userPageAccess/", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }),
+        ]);
+
+        if (!usersRes.ok) throw new Error("Failed to fetch users");
+        if (!pagesRes.ok) throw new Error("Failed to fetch pages");
+        if (!accessRes.ok) throw new Error("Failed to fetch access data");
+
+        const usersData = await usersRes.json();
+        const pagesData = await pagesRes.json();
+        const accessData = await accessRes.json();
+
+        setUsers(usersData);
+        setPages(pagesData);
+        setAccessList(accessData);
+      } catch (err) {
+        setError((err as Error).message);
       }
     }
 
-    fetchSelfUser();
-  }, [authInitialized, isAuthenticated]);
-
-  useEffect(() => {
-    fetchPage();
+    fetchAll();
   }, []);
 
-  async function fetchPage() {
-    try {
-      const res = await fetch(
-        `http://localhost:8000/api/readPage/${pageName}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch page");
-
-      const data = await res.json();
-
-      setPage(data);
-    } catch (err) {
-      const msg = (err as Error).message;
-
-      console.error(msg);
-      setError(msg);
-    }
-  }
-
-  async function handleCreateComment() {
-    try {
-      const res = await fetch(
-        `http://localhost:8000/api/createComment/${pageName}/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-          body: JSON.stringify({ content: newComment }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to create comment");
-
-      setNewComment("");
-      fetchPage();
-    } catch (err) {
-      const msg = (err as Error).message;
-
-      console.error(msg);
-      setError(msg);
-    }
-  }
-
-  async function handleUpdateComment(id: number) {
-    try {
-      const res = await fetch(
-        `http://localhost:8000/api/updateComment/${id}/`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-          body: JSON.stringify({ content: editedContent }),
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to update comment");
-
-      setEditingCommentId(null);
-      setEditedContent("");
-      fetchPage();
-    } catch (err) {
-      const msg = (err as Error).message;
-
-      console.error(msg);
-      setError(msg);
-    }
-  }
-
-  async function handleDeleteComment(id: number) {
-    if (!window.confirm("Are you sure you want to delete this comment?"))
-      return;
-
-    try {
-      const res = await fetch(
-        `http://localhost:8000/api/deleteComment/${id}/`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to delete comment");
-
-      fetchPage();
-    } catch (err) {
-      const msg = (err as Error).message;
-
-      console.error(msg);
-      setError(msg);
-    }
-  }
+  // Build a map of access: userId -> pageId -> access_level
+  const accessMap: Record<number, Record<number, string>> = {};
+  accessList.forEach(({ user, page, access_level }) => {
+    if (!accessMap[user]) accessMap[user] = {};
+    accessMap[user][page] = access_level;
+  });
 
   return (
-    <main className="page-wrapper">
-      {page && (
-        <>
-          <div className="page-content">
-            <h1>{page.name}</h1>
-            <p>{page.content}</p>
-          </div>
-
-          <div className="comments-section">
-            <h2>Comments</h2>
-
-            {error && <ErrorMessage>{error}</ErrorMessage>}
-
-            {page.comments.length === 0 && <p>No comments yet.</p>}
-
-            {page.comments.map((comment: any) => (
-              <Comment
-                key={comment.id}
-                date={new Date(comment.created_at).toLocaleString()}
-                author_name={comment.author.full_name || "Anonymous"}
-                content={comment.content}
-                isEditing={editingCommentId === comment.id}
-                editedContent={editedContent}
-                onChangeEditedContent={(e) => setEditedContent(e.target.value)}
-                onEditClick={() => {
-                  setEditingCommentId(comment.id);
-                  setEditedContent(comment.content);
-                }}
-                onDeleteClick={() => handleDeleteComment(comment.id)}
-                onSaveClick={() => handleUpdateComment(comment.id)}
-                onCancelClick={() => setEditingCommentId(null)}
-              />
+    <div>
+      <h1>User Access Levels</h1>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            {pages.map((page: any) => (
+              <th key={page.id}>{page.name}</th>
             ))}
-
-            <div className="add-comment-container">
-              <input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment"
-                required
-              />
-              <button onClick={handleCreateComment}>Post Comment</button>
-            </div>
-          </div>
-        </>
-      )}
-    </main>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user: any) => (
+            <tr key={user.id}>
+              <td>{user.full_name || user.email}</td>
+              {pages.map((page: any) => (
+                <td key={page.id}>{accessMap[user.id]?.[page.id] || "none"}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
