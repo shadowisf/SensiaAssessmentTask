@@ -36,6 +36,7 @@ DEFAULT_PAGE_ACCESS = {
 
 ACCESS_CHOICES = [
     ('all', 'all'),
+    ('create', 'create'),
     ('view', 'View'),
     ('edit', 'Edit'),
     ('delete', 'Delete'),

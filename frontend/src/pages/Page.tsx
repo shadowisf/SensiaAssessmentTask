@@ -11,49 +11,64 @@ export default function Page() {
   const { isAuthenticated, authInitialized } = useAuth();
 
   const [page, setPage] = useState<any | null>(null);
+  const [accessLevel, setAccessLevel] = useState("none");
   const [newComment, setNewComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [error, setError] = useState("");
 
-  // role check
   useEffect(() => {
-    async function fetchSelfUser() {
-      if (authInitialized && !isAuthenticated) {
-        navigate("/");
-      }
+    if (authInitialized && !isAuthenticated) {
+      navigate("/");
     }
-
-    fetchSelfUser();
   }, [authInitialized, isAuthenticated]);
 
   useEffect(() => {
-    fetchPage();
-  }, []);
+    async function initializePageData() {
+      try {
+        const headers = {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        };
 
-  async function fetchPage() {
-    try {
-      const res = await fetch(
-        `http://localhost:8000/api/readPage/${pageName}/`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("access")}`,
-          },
+        const [userRes, pageRes] = await Promise.all([
+          fetch("http://localhost:8000/api/readSelfUser/", { headers }),
+          fetch(`http://localhost:8000/api/readPage/${pageName}/`, { headers }),
+        ]);
+
+        if (!userRes.ok || !pageRes.ok) {
+          throw new Error("Failed to fetch user or page data");
         }
-      );
 
-      if (!res.ok) throw new Error("Failed to fetch page");
+        const userData = await userRes.json();
+        const pageData = await pageRes.json();
 
-      const data = await res.json();
+        setPage(pageData);
 
-      setPage(data);
-    } catch (err) {
-      const msg = (err as Error).message;
+        const accessRes = await fetch(
+          "http://localhost:8000/api/readAllPageAccess/",
+          { headers }
+        );
 
-      console.error(msg);
-      setError(msg);
+        if (!accessRes.ok) throw new Error("Failed to fetch access levels");
+
+        const accessData = await accessRes.json();
+
+        const match = accessData.find(
+          (entry: any) =>
+            entry.user === userData.id && entry.page_name === pageData.name
+        );
+
+        setAccessLevel(match?.access_level ?? "none");
+      } catch (err) {
+        const msg = (err as Error).message;
+
+        console.error(msg);
+        setError(msg);
+      }
     }
-  }
+
+    initializePageData();
+  }, []);
 
   async function handleCreateComment() {
     try {
@@ -72,7 +87,7 @@ export default function Page() {
       if (!res.ok) throw new Error("Failed to create comment");
 
       setNewComment("");
-      fetchPage();
+      initializePageData();
     } catch (err) {
       const msg = (err as Error).message;
 
@@ -83,6 +98,11 @@ export default function Page() {
 
   async function handleUpdateComment(id: number) {
     try {
+      if (accessLevel !== "edit") {
+        setError("You do not have permission to edit a comment");
+        throw new Error("You do not have permission to edit a comment");
+      }
+
       const res = await fetch(
         `http://localhost:8000/api/updateComment/${id}/`,
         {
@@ -99,7 +119,7 @@ export default function Page() {
 
       setEditingCommentId(null);
       setEditedContent("");
-      fetchPage();
+      initializePageData();
     } catch (err) {
       const msg = (err as Error).message;
 
@@ -111,6 +131,11 @@ export default function Page() {
   async function handleDeleteComment(id: number) {
     if (!window.confirm("Are you sure you want to delete this comment?"))
       return;
+
+    if (accessLevel !== "delete") {
+      setError("You do not have permission to delete a comment");
+      throw new Error("You do not have permission to delete a comment");
+    }
 
     try {
       const res = await fetch(
@@ -126,7 +151,7 @@ export default function Page() {
 
       if (!res.ok) throw new Error("Failed to delete comment");
 
-      fetchPage();
+      initializePageData();
     } catch (err) {
       const msg = (err as Error).message;
 
@@ -148,7 +173,6 @@ export default function Page() {
             <h2>Comments</h2>
 
             {error && <ErrorMessage>{error}</ErrorMessage>}
-
             {page.comments.length === 0 && <p>No comments yet.</p>}
 
             {page.comments.map((comment: any) => (
@@ -170,15 +194,17 @@ export default function Page() {
               />
             ))}
 
-            <div className="add-comment-container">
-              <input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment"
-                required
-              />
-              <button onClick={handleCreateComment}>Post Comment</button>
-            </div>
+            {accessLevel !== "view" && (
+              <div className="add-comment-container">
+                <input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment"
+                  required
+                />
+                <button onClick={handleCreateComment}>Post Comment</button>
+              </div>
+            )}
           </div>
         </>
       )}

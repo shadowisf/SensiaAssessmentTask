@@ -79,12 +79,12 @@ export default function UserTable() {
   }
 
   async function handleUpdateAccessLevel(
-    email: string,
+    user_id: string,
     slug: string,
     newAccessLevel: string
   ) {
     const res = await fetch(
-      `http://localhost:8000/api/updateAccessLevel/${email}/${slug}/`,
+      `http://localhost:8000/api/updateAccessLevel/${user_id}/${slug}/`,
       {
         method: "PUT",
         headers: {
@@ -108,7 +108,7 @@ export default function UserTable() {
     try {
       await Promise.all(
         Object.entries(editedAccess).map(([slug, level]) =>
-          handleUpdateAccessLevel(selectedUser.email, slug, level)
+          handleUpdateAccessLevel(selectedUser.id, slug, level)
         )
       );
 
@@ -252,6 +252,7 @@ export default function UserTable() {
                       onChange={(e) => handleChange(page.slug, e.target.value)}
                     >
                       <option value="all">all</option>
+                      <option value="create">create</option>
                       <option value="view">view</option>
                       <option value="edit">edit</option>
                       <option value="delete">delete</option>

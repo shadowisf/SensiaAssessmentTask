@@ -127,9 +127,9 @@ class ReadAllPageAccessView(APIView):
 class UpdateAccessLevelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, email, slug):
+    def put(self, request, user_id, slug):
         page = get_object_or_404(Page, slug=slug)
-        user = get_object_or_404(User, email=email)
+        user = get_object_or_404(User, id=user_id)
 
         new_level = request.data.get("access_level")
         if not new_level:
