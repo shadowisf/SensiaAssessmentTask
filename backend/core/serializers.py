@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import Comment, Page, User
+from core.models import Comment, Page, User, UserPageAccess
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate
@@ -80,3 +80,11 @@ class PageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Page
         fields = ['id', 'name', 'slug', 'content', 'comments']
+
+class UserAccessSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source='user.email', read_only=True)
+    page_name = serializers.CharField(source='page.name', read_only=True)
+
+    class Meta:
+        model = UserPageAccess
+        fields = ['id', 'user', 'user_email', 'page', 'page_name', 'access_level']

@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { readSelfUser } from "../../utils/UserCRUD";
 import UserManagement from "./components/UserManagement";
 import UserTable from "./components/UserTable";
+import ErrorMessage from "../../components/ErrorMessage";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -58,6 +59,8 @@ export default function AdminDashboard() {
       <main className="dashboard-wrapper">
         <div className="pages-container">
           <h1>Pages</h1>
+
+          {error && <ErrorMessage>{error}</ErrorMessage>}
 
           <div className="page-gallery">
             {pages.map((page: any) => {

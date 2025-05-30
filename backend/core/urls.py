@@ -19,4 +19,7 @@ urlpatterns = [
     path("createComment/<slug:page_name>/", views.CreateCommentView.as_view(), name="create-comment"),
     path('updateComment/<int:comment_id>/', views.UpdateCommentView.as_view(), name="update-comment"),
     path('deleteComment/<int:comment_id>/', views.DeleteCommentView.as_view(), name="delete-comment"),
+    
+    path('readPageAccess/<str:slug>/', views.ListPageAccessView.as_view(), name="read-page-access"),
+    path('updateAccessLevel/<int:access_id>/', views.UpdateAccessLevelView.as_view(), name="update-access-level"),
 ]

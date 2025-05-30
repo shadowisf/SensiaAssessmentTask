@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
+from rest_framework import status, permissions
 from django.shortcuts import get_object_or_404
-from core.models import Page, Comment, User
-from core.serializers import CommentSerializer, CustomTokenObtainPairSerializer, PageSerializer, CreateUserSerializer, ReadUserSerializer, UpdateUserSerializer
+from core.models import Page, Comment, User, UserPageAccess
+from core.serializers import CommentSerializer, CustomTokenObtainPairSerializer, PageSerializer, CreateUserSerializer, ReadUserSerializer, UpdateUserSerializer, UserAccessSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -115,3 +115,26 @@ class DeleteCommentView(APIView):
 
         comment.delete()
         return Response({"message": "Comment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
+class ListPageAccessView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, slug):
+        page = get_object_or_404(Page, slug=slug)
+        access = UserPageAccess.objects.filter(page=page)
+        serializer = UserAccessSerializer(access, many=True)
+        return Response(serializer.data)
+    
+class UpdateAccessLevelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, access_id):
+        access = get_object_or_404(UserPageAccess, id=access_id)
+        new_level = request.data.get("access_level")
+        if not new_level:
+            return Response({"detail": "access_level required"}, status=400)
+        
+        access.access_level = new_level
+        access.save()
+        serializer = UserAccessSerializer(access)
+        return Response(serializer.data)

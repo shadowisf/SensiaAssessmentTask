@@ -1,16 +1,36 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Comment from "../components/Comment";
+import ErrorMessage from "../components/ErrorMessage";
+import { useAuth } from "../context/AuthContext";
 
 export default function Page() {
+  const navigate = useNavigate();
+
   const { pageName } = useParams();
+  const { isAuthenticated, authInitialized } = useAuth();
+
   const [page, setPage] = useState<any | null>(null);
   const [newComment, setNewComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [error, setError] = useState("");
 
-  // Fetch page and comments
+  // role check
+  useEffect(() => {
+    async function fetchSelfUser() {
+      if (authInitialized && !isAuthenticated) {
+        navigate("/");
+      }
+    }
+
+    fetchSelfUser();
+  }, [authInitialized, isAuthenticated]);
+
+  useEffect(() => {
+    fetchPage();
+  }, []);
+
   async function fetchPage() {
     try {
       const res = await fetch(
@@ -29,14 +49,11 @@ export default function Page() {
       setPage(data);
     } catch (err) {
       const msg = (err as Error).message;
+
       console.error(msg);
       setError(msg);
     }
   }
-
-  useEffect(() => {
-    fetchPage();
-  }, []);
 
   async function handleCreateComment() {
     try {
@@ -57,7 +74,10 @@ export default function Page() {
       setNewComment("");
       fetchPage();
     } catch (err) {
-      console.error((err as Error).message);
+      const msg = (err as Error).message;
+
+      console.error(msg);
+      setError(msg);
     }
   }
 
@@ -81,7 +101,10 @@ export default function Page() {
       setEditedContent("");
       fetchPage();
     } catch (err) {
-      console.error((err as Error).message);
+      const msg = (err as Error).message;
+
+      console.error(msg);
+      setError(msg);
     }
   }
 
@@ -105,7 +128,10 @@ export default function Page() {
 
       fetchPage();
     } catch (err) {
-      console.error((err as Error).message);
+      const msg = (err as Error).message;
+
+      console.error(msg);
+      setError(msg);
     }
   }
 
@@ -120,6 +146,8 @@ export default function Page() {
 
           <div className="comments-section">
             <h2>Comments</h2>
+
+            {error && <ErrorMessage>{error}</ErrorMessage>}
 
             {page.comments.length === 0 && <p>No comments yet.</p>}
 
