@@ -17,5 +17,5 @@ export default function SuccessMessage({ children }: SuccessMessageProps) {
 
   if (!visible) return null;
 
-  return <p style={{ color: "darkgreen" }}>{children}</p>;
+  return <p style={{ color: "green" }}>{children}</p>;
 }

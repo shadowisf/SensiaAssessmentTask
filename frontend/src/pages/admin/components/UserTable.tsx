@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import ErrorMessage from "../../../components/ErrorMessage";
+import SuccessMessage from "../../../components/SuccessMessage";
+import Spinner from "../../../components/Spinner";
+import { createUser } from "../../../utils/UserCRUD";
 
 export default function UserTable() {
   const [users, setUsers] = useState<any[]>([]);
@@ -8,8 +11,13 @@ export default function UserTable() {
   const [error, setError] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isCreateMode, setIsCreateMode] = useState(false);
 
   const [editedAccess, setEditedAccess] = useState<Record<string, string>>({});
+  const [newEmail, setNewEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     fetchAllData();
@@ -18,9 +26,7 @@ export default function UserTable() {
   async function fetchAllData() {
     try {
       const token = localStorage.getItem("access");
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
+      const headers = { Authorization: `Bearer ${token}` };
 
       const [userRes, accessRes, pagesRes] = await Promise.all([
         fetch("http://localhost:8000/api/readAllUsers/", { headers }),
@@ -28,9 +34,9 @@ export default function UserTable() {
         fetch("http://localhost:8000/api/readAllPages/", { headers }),
       ]);
 
-      if (!userRes.ok) throw new Error("Failed to fetch users");
-      if (!accessRes.ok) throw new Error("Failed to fetch access levels");
-      if (!pagesRes.ok) throw new Error("Failed to fetch pages");
+      if (!userRes.ok || !accessRes.ok || !pagesRes.ok) {
+        throw new Error("Failed to fetch data");
+      }
 
       const [userData, accessData, pagesData] = await Promise.all([
         userRes.json(),
@@ -41,6 +47,7 @@ export default function UserTable() {
       setUsers(userData);
       setAccess(accessData);
       setPages(pagesData);
+      setError("");
     } catch (error) {
       setError((error as Error).message);
     }
@@ -48,6 +55,10 @@ export default function UserTable() {
 
   function getAccessLevelsForUser(userId: number) {
     const userAccess = access.filter((a: any) => a.user === userId);
+
+    if (userAccess.length === 0) {
+      return <p>No access.</p>;
+    }
 
     return (
       <ul>
@@ -57,7 +68,7 @@ export default function UserTable() {
             style={{
               display: "flex",
               justifyContent: "space-between",
-              paddingRight: "1rem",
+              paddingRight: "2rem",
             }}
           >
             <span>{a.page_name}:</span> <span>{a.access_level}</span>
@@ -85,8 +96,6 @@ export default function UserTable() {
     );
 
     if (!res.ok) throw new Error("Failed to update access level");
-
-    fetchAllData();
   }
 
   function handleChange(slug: string, newLevel: string) {
@@ -97,12 +106,15 @@ export default function UserTable() {
     if (!selectedUser) return;
 
     try {
-      const updates = Object.entries(editedAccess);
-      for (const [slug, level] of updates) {
-        await handleUpdateAccessLevel(selectedUser.email, slug, level);
-      }
+      await Promise.all(
+        Object.entries(editedAccess).map(([slug, level]) =>
+          handleUpdateAccessLevel(selectedUser.email, slug, level)
+        )
+      );
 
       setEditedAccess({});
+      setDrawerOpen(false);
+      fetchAllData();
     } catch (err) {
       const msg = (err as Error).message;
 
@@ -111,11 +123,46 @@ export default function UserTable() {
     }
   }
 
+  async function handleCreateUser() {
+    setLoading(true);
+    setSuccess("");
+    setCreateError("");
+
+    const { data, error } = await createUser(newEmail);
+
+    if (data) {
+      setSuccess("User created successfully");
+      setNewEmail("");
+      fetchAllData();
+    }
+
+    if (error) {
+      setCreateError(error);
+    }
+
+    setLoading(false);
+  }
+
   return (
     <div className="user-table-container">
       <h1>User Table</h1>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
+
+      <div style={{ marginBottom: "1rem" }}>
+        <button
+          onClick={() => {
+            setDrawerOpen(true);
+            setIsCreateMode(true);
+            setSelectedUser(null);
+            setEditedAccess({});
+            setSuccess("");
+            setCreateError("");
+          }}
+        >
+          Create User
+        </button>
+      </div>
 
       <table>
         <thead>
@@ -133,7 +180,7 @@ export default function UserTable() {
               <td colSpan={5}>No users found.</td>
             </tr>
           ) : (
-            users.map((user: any) => (
+            users.map((user) => (
               <tr key={user.id}>
                 <td>{user.id}</td>
                 <td>{user.email}</td>
@@ -144,6 +191,7 @@ export default function UserTable() {
                     onClick={() => {
                       setSelectedUser(user);
                       setDrawerOpen(true);
+                      setIsCreateMode(false);
                       setEditedAccess({});
                     }}
                   >
@@ -156,41 +204,74 @@ export default function UserTable() {
         </tbody>
       </table>
 
-      {drawerOpen && selectedUser && (
+      {drawerOpen && (
         <div className="drawer">
           <div className="drawer-header">
-            <h2>Edit Access for {selectedUser.full_name}</h2>
+            <h2>
+              {isCreateMode
+                ? "Create User"
+                : `Edit Access for ${selectedUser.full_name}`}
+            </h2>
             <button onClick={() => setDrawerOpen(false)}>Close</button>
           </div>
+
           <div className="drawer-body">
-            {pages.map((page: any) => {
-              const entry = access.find(
-                (a: any) => a.user === selectedUser.id && a.page === page.id
-              );
-              const current =
-                editedAccess[page.slug] ??
-                (entry ? entry.access_level : "none");
+            {isCreateMode ? (
+              <div className="user-management-container">
+                {loading && <Spinner />}
+                <input
+                  type="text"
+                  placeholder="Email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                />
 
-              return (
-                <div key={page.id} className="access-row">
-                  <label>{page.name}</label>
-                  <select
-                    value={current}
-                    onChange={(e) => handleChange(page.slug, e.target.value)}
-                  >
-                    <option value="all">all</option>
-                    <option value="view">view</option>
-                    <option value="edit">edit</option>
-                    <option value="delete">delete</option>
-                    <option value="none">none</option>
-                  </select>
-                </div>
-              );
-            })}
+                {createError && <ErrorMessage>{createError}</ErrorMessage>}
+                {success && <SuccessMessage>{success}</SuccessMessage>}
 
-            <div style={{ marginTop: "1rem" }}>
-              <button onClick={handleSave}>Save Changes</button>
-            </div>
+                <button
+                  onClick={handleCreateUser}
+                  disabled={!newEmail || loading}
+                >
+                  Create
+                </button>
+              </div>
+            ) : (
+              pages.map((page) => {
+                const entry = access.find(
+                  (a) => a.user === selectedUser.id && a.page === page.id
+                );
+                const current =
+                  editedAccess[page.slug] ?? entry?.access_level ?? "none";
+
+                return (
+                  <div key={page.id} className="access-row">
+                    <label>{page.name}</label>
+                    <select
+                      value={current}
+                      onChange={(e) => handleChange(page.slug, e.target.value)}
+                    >
+                      <option value="all">all</option>
+                      <option value="view">view</option>
+                      <option value="edit">edit</option>
+                      <option value="delete">delete</option>
+                      <option value="none">none</option>
+                    </select>
+                  </div>
+                );
+              })
+            )}
+
+            {!isCreateMode && (
+              <div style={{ marginTop: "1rem" }}>
+                <button
+                  onClick={handleSave}
+                  disabled={Object.keys(editedAccess).length === 0}
+                >
+                  Save Changes
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

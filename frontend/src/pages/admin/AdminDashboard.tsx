@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { readSelfUser } from "../../utils/UserCRUD";
-import UserManagement from "./components/UserManagement";
 import UserTable from "./components/UserTable";
 import ErrorMessage from "../../components/ErrorMessage";
 
@@ -75,8 +74,6 @@ export default function AdminDashboard() {
             })}
           </div>
         </div>
-
-        <UserManagement />
 
         <UserTable />
       </main>
