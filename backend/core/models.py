@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
-
+from django.conf import settings
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -21,6 +21,26 @@ class CustomUserManager(BaseUserManager):
         
         return self.create_user(email, password, **extra_fields)
 
+DEFAULT_PAGE_ACCESS = {
+    "Products List": "none",
+    "Marketing List": "none",
+    "Order List": "none",
+    "Media Plans": "none",
+    "Offer Pricing SKUs": "none",
+    "Clients": "none",
+    "Suppliers": "none",
+    "Customer Support": "none",
+    "Sales Reports": "none",
+    "Finance & Accounting": "none"
+}
+
+ACCESS_CHOICES = [
+    ('all', 'all'),
+    ('view', 'View'),
+    ('edit', 'Edit'),
+    ('delete', 'Delete'),
+    ('none', 'None'),
+]
 
 class User(AbstractUser):
     username = None
@@ -30,12 +50,6 @@ class User(AbstractUser):
         ("admin", "Super Admin"),
         ("user", "Regular User")
     ], default="user")
-    access = models.CharField(max_length=20, choices=[
-        ("view", "view"),
-        ("edit", "edit"),
-        ("create", "create"),
-        ("delete", "delete")
-    ], default="view")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]
@@ -44,3 +58,32 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.email} ({self.role})"
+
+    
+class Page(models.Model):
+    name = models.CharField(max_length=100)
+    content = models.TextField()
+
+    def __str__(self):
+        return self.name
+    
+class UserPageAccess(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    page = models.ForeignKey(Page, on_delete=models.CASCADE)
+    access_level = models.CharField(max_length=10, choices=ACCESS_CHOICES, default='none')
+
+    class Meta:
+        unique_together = ('user', 'page')
+
+    def __str__(self):
+        return f"{self.user.email} - {self.page.name}: {self.access_level}"
+
+class Comment(models.Model):
+    page = models.ForeignKey(Page, related_name="comments", on_delete=models.CASCADE)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    history = models.JSONField(default=list, blank=True)
+
+    def __str__(self):
+        return f"{self.author} on {self.page}"

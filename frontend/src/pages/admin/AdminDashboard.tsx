@@ -26,6 +26,14 @@ export default function AdminDashboard() {
   return (
     <>
       <main className="dashboard-wrapper">
+        <div className="page-gallery-container">
+          <h1>Pages</h1>
+
+          <div>
+            
+          </div>
+        </div>
+
         <UserManagement />
 
         <UserTable />

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from core.models import User
+from core.models import Comment, Page, User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate
@@ -60,3 +60,16 @@ class UpdateUserSerializer(serializers.ModelSerializer):
         instance.full_name = validated_data.get("full_name", instance.full_name)
         instance.save()
         return instance
+    
+class CommentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ['id', 'author', 'content', 'history']
+
+
+class PageSerializer(serializers.ModelSerializer):
+    comments = CommentSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Page
+        fields = ['id', 'name', 'content', 'comments']
