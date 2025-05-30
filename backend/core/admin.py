@@ -4,8 +4,8 @@ from .models import User
 
 class UserAdmin(BaseUserAdmin):
     model = User
-    list_display = ("email", "full_name", "role", "is_staff", "is_active")
-    list_filter = ("is_staff", "is_active", "role")
+    list_display = ("email", "full_name", "role", "access", "is_staff", "is_active")
+    list_filter = ("is_staff", "is_active", "role", "access")
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("full_name", "role")}),

@@ -123,6 +123,19 @@ nav {
       gap: 4px;
     }
   }
+
+  .user-table-container {
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    td,
+    th {
+      border: 1px solid white;
+      padding: 8px;
+    }
+  }
 }
 
 .user-profile-wrapper {
@@ -160,8 +173,4 @@ nav {
   align-items: center;
   justify-content: center;
   height: 100dvh;
-}
-
-* {
-  border: solid 1px red;
 }

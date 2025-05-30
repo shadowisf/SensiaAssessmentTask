@@ -37,13 +37,16 @@ class UpdateSelfUserView(APIView):
         
         if serializer.is_valid():
             serializer.save()
+            
             return Response({"message": "User updated successfully"}, status=status.HTTP_200_OK)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class ListUsersView(APIView):
+class readAllUsersView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
         users = User.objects.filter(role="user")
         serializer = ReadUserSerializer(users, many=True)
+        
         return Response(serializer.data)

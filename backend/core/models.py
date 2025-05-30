@@ -30,6 +30,12 @@ class User(AbstractUser):
         ("admin", "Super Admin"),
         ("user", "Regular User")
     ], default="user")
+    access = models.CharField(max_length=20, choices=[
+        ("view", "view"),
+        ("edit", "edit"),
+        ("create", "create"),
+        ("delete", "delete")
+    ], default="view")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]

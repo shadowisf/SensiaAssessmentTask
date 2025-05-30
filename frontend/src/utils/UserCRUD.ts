@@ -19,26 +19,7 @@ export function generateStrongPassword(length = 12): string {
   }
 }
 
-type createUserProps = {
-  email: string;
-  setSuccess: (v: string) => void;
-  setEmail: (v: string) => void;
-  setError: (v: string) => void;
-  setLoading: (v: boolean) => void;
-};
-
-export async function createUser({
-  email,
-  setSuccess,
-  setEmail,
-  setError,
-  setLoading,
-}: createUserProps) {
-  setError("");
-  setSuccess("");
-
-  setLoading(true);
-
+export async function createUser(email: string) {
   try {
     const password = generateStrongPassword();
     const full_name = email.split("@")[0];
@@ -57,19 +38,17 @@ export async function createUser({
       throw new Error("Failed to create user");
     }
 
-    console.log(password);
     const data = await response.json();
 
-    setSuccess(data.message);
-    setEmail("");
+    console.log(password);
+
+    return { data, error: null };
   } catch (err) {
     const msg = (err as Error).message;
 
     console.error(msg);
 
-    setError(msg);
-  } finally {
-    setLoading(false);
+    return { data: null, error: msg };
   }
 }
 
@@ -84,6 +63,30 @@ export async function readSelfUser() {
 
     if (!response.ok) {
       throw new Error("Failed to read user");
+    }
+
+    const data = await response.json();
+
+    return { data, error: null };
+  } catch (err) {
+    const msg = (err as Error).message;
+
+    console.error(msg);
+
+    return { data: null, error: msg };
+  }
+}
+
+export async function readAllUsers() {
+  try {
+    const response = await fetch("http://localhost:8000/api/readAllUsers/", {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access")}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch users");
     }
 
     const data = await response.json();

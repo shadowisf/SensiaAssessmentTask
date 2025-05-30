@@ -1,85 +1,34 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import ErrorMessage from "../../components/ErrorMessage";
-import SuccessMessage from "../../components/SuccessMessage";
-import { createUser, readSelfUser } from "../../utils/UserCRUD";
-import Spinner from "../../components/Spinner";
+import { readSelfUser } from "../../utils/UserCRUD";
+import UserManagement from "./components/UserManagement";
+import UserTable from "./components/UserTable";
 
 export default function AdminDashboard() {
-  const [email, setEmail] = useState("");
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-
   const { isAuthenticated, authInitialized } = useAuth();
 
   const navigate = useNavigate();
 
-  // protected page
+  // role check
   useEffect(() => {
-    if (authInitialized && !isAuthenticated) {
-      navigate("/");
-    }
-  }, [authInitialized, isAuthenticated]);
-
-  // fetch self user
-  useEffect(() => {
-    async function fetchUser() {
+    async function fetchSelfUser() {
       const { data } = await readSelfUser();
 
-      if (data.role !== "admin") {
+      if (data.role !== "admin" || (authInitialized && !isAuthenticated)) {
         navigate("/");
       }
     }
 
-    fetchUser();
-  }, []);
-
-  
+    fetchSelfUser();
+  }, [authInitialized, isAuthenticated]);
 
   return (
     <>
-      {loading && <Spinner />}
-
       <main className="dashboard-wrapper">
-        <div className="user-management-container">
-          <h1>User Management</h1>
+        <UserManagement />
 
-          <div className="input-container">
-            <input
-              type="text"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          {error ? (
-            <ErrorMessage>{error}</ErrorMessage>
-          ) : success ? (
-            <SuccessMessage>{success}</SuccessMessage>
-          ) : null}
-
-          <button
-            onClick={() =>
-              createUser({
-                email,
-                setSuccess,
-                setEmail,
-                setError,
-                setLoading,
-              })
-            }
-          >
-            Create
-          </button>
-        </div>
-
-        <div className="user-management-container">
-          <h1>User Table</h1>
-        </div>
+        <UserTable />
       </main>
     </>
   );

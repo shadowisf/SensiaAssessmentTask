@@ -10,5 +10,5 @@ urlpatterns = [
     path('createUser/', views.CreateUserView.as_view(), name="create-user"),
     path('readSelfUser/', views.ReadSelfUserView.as_view(), name="read-self-user"),
     path('updateSelfUser/', views.UpdateSelfUserView.as_view(), name="update-self-user"),
-    path("users/", views.ListUsersView.as_view(), name="user-list"),
+    path("readAllUsers/", views.readAllUsersView.as_view(), name="read-all-users"),
 ]
