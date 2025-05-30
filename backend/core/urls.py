@@ -21,5 +21,5 @@ urlpatterns = [
     path('deleteComment/<int:comment_id>/', views.DeleteCommentView.as_view(), name="delete-comment"),
     
     path('readAllPageAccess/', views.ReadAllPageAccessView.as_view(), name="read-all-page-access"),
-    path('updateAccessLevel/<int:access_id>/', views.UpdateAccessLevelView.as_view(), name="update-access-level"),
+    path('updateAccessLevel/<str:email>/<slug:slug>/', views.UpdateAccessLevelView.as_view(), name='update-access-level'),
 ]

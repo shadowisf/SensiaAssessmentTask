@@ -127,13 +127,24 @@ class ReadAllPageAccessView(APIView):
 class UpdateAccessLevelView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, access_id):
-        access = get_object_or_404(UserPageAccess, id=access_id)
+    def put(self, request, email, slug):
+        page = get_object_or_404(Page, slug=slug)
+        user = get_object_or_404(User, email=email)
+
         new_level = request.data.get("access_level")
         if not new_level:
             return Response({"detail": "access_level required"}, status=400)
-        
-        access.access_level = new_level
-        access.save()
+
+        access, created = UserPageAccess.objects.get_or_create(
+            user=user,
+            page=page,
+            defaults={"access_level": new_level}
+        )
+
+        # If not created, update existing
+        if not created:
+            access.access_level = new_level
+            access.save()
+
         serializer = UserAccessSerializer(access)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
