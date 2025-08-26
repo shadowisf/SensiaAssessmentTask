@@ -50,6 +50,7 @@ export default function UserLogin() {
       setError(msg);
     } finally {
       setLoading(false);
+      setPassword("");
     }
   }
 

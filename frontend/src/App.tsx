@@ -7,6 +7,7 @@ import UserLogin from "./pages/user/UserLogin";
 import UserDashboard from "./pages/user/UserDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Page from "./pages/Page";
+import YouAreLost from "./pages/YouAreLost";
 
 export default function App() {
   return (
@@ -19,6 +20,8 @@ export default function App() {
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
+
+        <Route path="*" element={<YouAreLost />} />
 
         <Route path="/page/:pageName" element={<Page />} />
       </Routes>

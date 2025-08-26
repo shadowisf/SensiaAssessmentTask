@@ -57,7 +57,7 @@ export default function NavBar() {
             : "/"
         }
       >
-        SVG
+        Dashboard
       </Link>
 
       <div className="right-container">
