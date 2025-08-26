@@ -137,7 +137,12 @@ export default function Page() {
         }
       );
 
-      if (!res.ok) throw new Error("Failed to update comment");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const message =
+          errorData?.detail || errorData?.error || "Failed to delete comment.";
+        throw new Error(message);
+      }
 
       setEditingCommentId(null);
       setEditedContent("");
@@ -170,7 +175,12 @@ export default function Page() {
         }
       );
 
-      if (!res.ok) throw new Error("Failed to delete comment");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        const message =
+          errorData?.detail || errorData?.error || "Failed to delete comment.";
+        throw new Error(message);
+      }
 
       initializePageData();
     } catch (err) {
