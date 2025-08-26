@@ -131,19 +131,29 @@ class UpdateAccessLevelView(APIView):
         page = get_object_or_404(Page, slug=slug)
         user = get_object_or_404(User, id=user_id)
 
-        new_level = request.data.get("access_level")
-        if not new_level:
-            return Response({"detail": "access_level required"}, status=400)
+        # Extract boolean permissions from request
+        can_create = request.data.get("can_create", False)
+        can_view = request.data.get("can_view", False)
+        can_edit = request.data.get("can_edit", False)
+        can_delete = request.data.get("can_delete", False)
 
         access, created = UserPageAccess.objects.get_or_create(
             user=user,
             page=page,
-            defaults={"access_level": new_level}
+            defaults={
+                "can_create": can_create,
+                "can_view": can_view,
+                "can_edit": can_edit,
+                "can_delete": can_delete,
+            }
         )
 
-        # If not created, update existing
+        # If not created, update existing permissions
         if not created:
-            access.access_level = new_level
+            access.can_create = can_create
+            access.can_view = can_view
+            access.can_edit = can_edit
+            access.can_delete = can_delete
             access.save()
 
         serializer = UserAccessSerializer(access)

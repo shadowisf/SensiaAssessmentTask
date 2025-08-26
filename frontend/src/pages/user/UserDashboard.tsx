@@ -3,14 +3,17 @@ import { readSelfUser } from "../../utils/UserCRUD";
 import { Link, useNavigate } from "react-router-dom";
 import ErrorMessage from "../../components/ErrorMessage";
 import { useAuth } from "../../context/AuthContext";
+import type { AccessLevel } from "../../utils/types";
 
 export default function UserDashboard() {
   const navigate = useNavigate();
   const { isAuthenticated, authInitialized } = useAuth();
 
   const [pages, setPages] = useState<any[]>([]);
-  const [accessLevels, setAccessLevels] = useState<any[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [accessLevels, setAccessLevels] = useState<Record<number, AccessLevel>>(
+    {}
+  );
+  const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -22,15 +25,18 @@ export default function UserDashboard() {
         return;
       }
 
-      setCurrentUserId(data.id);
+      setCurrentUser(data);
     }
 
     fetchSelfUser();
   }, [authInitialized, isAuthenticated]);
 
+  // Fetch pages and access levels
   useEffect(() => {
     async function fetchData() {
       try {
+        if (!currentUser) return;
+
         const token = localStorage.getItem("access");
         const headers = { Authorization: `Bearer ${token}` };
 
@@ -47,26 +53,42 @@ export default function UserDashboard() {
           pagesRes.json(),
           accessRes.json(),
         ]);
-
         setPages(pagesData);
-        setAccessLevels(accessData);
-      } catch (error) {
-        setError((error as Error).message);
-        console.error(error);
+
+        const newAccessLevels: typeof accessLevels = {};
+
+        pagesData.forEach((page: any) => {
+          const entry = accessData.find(
+            (a: any) => a.user === currentUser.id && a.page === page.id
+          );
+          newAccessLevels[page.id] = {
+            can_create: entry?.can_create ?? false,
+            can_view: entry?.can_view ?? false,
+            can_edit: entry?.can_edit ?? false,
+            can_delete: entry?.can_delete ?? false,
+          };
+        });
+
+        setAccessLevels(newAccessLevels);
+      } catch (err) {
+        const msg = (err as Error).message;
+        console.error(msg);
+        setError(msg);
       }
     }
 
     fetchData();
-  }, []);
+  }, [currentUser]);
 
-  function getAccessForPage(pageId: number): string | null {
-    if (!currentUserId) return null;
-
-    const access = accessLevels.find(
-      (a) => a.user === currentUserId && a.page === pageId
+  function hasAnyAccess(pageId: number) {
+    const access = accessLevels[pageId];
+    if (!access) return false;
+    return (
+      access.can_create ||
+      access.can_view ||
+      access.can_edit ||
+      access.can_delete
     );
-
-    return access?.access_level || null;
   }
 
   return (
@@ -78,14 +100,20 @@ export default function UserDashboard() {
 
         <div className="page-gallery">
           {pages.map((page: any) => {
-            const accessLevel = getAccessForPage(page.id);
-            if (!accessLevel || accessLevel === "none") return null;
+            if (!hasAnyAccess(page.id)) return null;
+
+            const access = accessLevels[page.id];
+            const perms = [];
+            if (access.can_create) perms.push("Create");
+            if (access.can_view) perms.push("View");
+            if (access.can_edit) perms.push("Edit");
+            if (access.can_delete) perms.push("Delete");
 
             return (
               <div className="page" key={page.id}>
                 <Link to={`/page/${page.slug}`}>
                   {page.name}
-                  <small>Access: {accessLevel}</small>
+                  <small>Access: {perms.join(", ")}</small>
                 </Link>
               </div>
             );

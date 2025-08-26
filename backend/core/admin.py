@@ -40,10 +40,9 @@ class CommentAdmin(admin.ModelAdmin):
 
 
 class UserPageAccessAdmin(admin.ModelAdmin):
-    list_display = ('user', 'page', 'access_level')
-    list_filter = ('access_level', 'page')
+    list_display = ('user', 'page', 'can_create', 'can_view', 'can_edit', 'can_delete')
+    list_filter = ('can_create', 'can_view', 'can_edit', 'can_delete', 'page')
     search_fields = ('user__email', 'page__name')
-    ordering = ('page', 'user')
 
 admin.site.register(UserPageAccess, UserPageAccessAdmin)
 admin.site.register(Page, PageAdmin)

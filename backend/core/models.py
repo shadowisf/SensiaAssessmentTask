@@ -72,13 +72,27 @@ class Page(models.Model):
 class UserPageAccess(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     page = models.ForeignKey(Page, on_delete=models.CASCADE)
-    access_level = models.CharField(max_length=10, choices=ACCESS_CHOICES, default='none')
+    
+    can_create = models.BooleanField(default=False)
+    can_view = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+    can_delete = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('user', 'page')
 
     def __str__(self):
-        return f"{self.user.email} - {self.page.name}: {self.access_level}"
+        perms = []
+        if self.can_create:
+            perms.append("create")
+        if self.can_view:
+            perms.append("view")
+        if self.can_edit:
+            perms.append("edit")
+        if self.can_delete:
+            perms.append("delete")
+        perms_str = ", ".join(perms) if perms else "no access"
+        return f"{self.user.email} - {self.page.name}: {perms_str}"
 
 class Comment(models.Model):
     page = models.ForeignKey(Page, related_name="comments", on_delete=models.CASCADE)

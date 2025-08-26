@@ -65,10 +65,7 @@ export default function AdminDashboard() {
             {pages.map((page: any) => {
               return (
                 <div className="page" key={page.id}>
-                  <Link to={`/page/${page.slug}`}>
-                    {page.name}
-                    <small>Create | View | Edit | Delete</small>
-                  </Link>
+                  <Link to={`/page/${page.slug}`}>{page.name}</Link>
                 </div>
               );
             })}

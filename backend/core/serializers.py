@@ -87,4 +87,14 @@ class UserAccessSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserPageAccess
-        fields = ['id', 'user', 'user_email', 'page', 'page_name', 'access_level']
+        fields = [
+            'id',
+            'user',
+            'user_email',
+            'page',
+            'page_name',
+            'can_create',
+            'can_view',
+            'can_edit',
+            'can_delete'
+        ]

@@ -3,15 +3,20 @@ import { useNavigate, useParams } from "react-router-dom";
 import Comment from "../components/Comment";
 import ErrorMessage from "../components/ErrorMessage";
 import { useAuth } from "../context/AuthContext";
+import type { AccessLevel } from "../utils/types";
 
 export default function Page() {
   const navigate = useNavigate();
-
   const { pageName } = useParams();
   const { isAuthenticated, authInitialized } = useAuth();
 
   const [page, setPage] = useState<any | null>(null);
-  const [accessLevel, setAccessLevel] = useState("none");
+  const [access, setAccess] = useState<AccessLevel>({
+    can_create: false,
+    can_view: false,
+    can_edit: false,
+    can_delete: false,
+  });
   const [newComment, setNewComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedContent, setEditedContent] = useState("");
@@ -44,33 +49,51 @@ export default function Page() {
 
       const userData = await userRes.json();
       const pageData = await pageRes.json();
-
       setPage(pageData);
 
-      const accessRes = await fetch(
-        "http://localhost:8000/api/readAllPageAccess/",
-        { headers }
-      );
+      if (userData.role === "admin") {
+        // Admin: full permissions
+        setAccess({
+          can_create: true,
+          can_view: true,
+          can_edit: true,
+          can_delete: true,
+        });
+      } else {
+        // Normal user: fetch specific permissions
+        const accessRes = await fetch(
+          "http://localhost:8000/api/readAllPageAccess/",
+          { headers }
+        );
+        if (!accessRes.ok) throw new Error("Failed to fetch access levels");
 
-      if (!accessRes.ok) throw new Error("Failed to fetch access levels");
+        const accessData = await accessRes.json();
 
-      const accessData = await accessRes.json();
+        const match = accessData.find(
+          (entry: any) =>
+            entry.user === userData.id && entry.page_name === pageData.name
+        );
 
-      const match = accessData.find(
-        (entry: any) =>
-          entry.user === userData.id && entry.page_name === pageData.name
-      );
-
-      setAccessLevel(match?.access_level ?? "none");
+        setAccess({
+          can_create: match?.can_create ?? false,
+          can_view: match?.can_view ?? false,
+          can_edit: match?.can_edit ?? false,
+          can_delete: match?.can_delete ?? false,
+        });
+      }
     } catch (err) {
       const msg = (err as Error).message;
-
       console.error(msg);
       setError(msg);
     }
   }
 
   async function handleCreateComment() {
+    if (!access.can_create) {
+      setError("You do not have permission to create a comment");
+      return;
+    }
+
     try {
       const res = await fetch(
         `http://localhost:8000/api/createComment/${pageName}/`,
@@ -90,19 +113,18 @@ export default function Page() {
       initializePageData();
     } catch (err) {
       const msg = (err as Error).message;
-
       console.error(msg);
       setError(msg);
     }
   }
 
   async function handleUpdateComment(id: number) {
-    try {
-      if (accessLevel !== "edit") {
-        setError("You do not have permission to edit a comment");
-        throw new Error("You do not have permission to edit a comment");
-      }
+    if (!access.can_edit) {
+      setError("You do not have permission to edit a comment");
+      return;
+    }
 
+    try {
       const res = await fetch(
         `http://localhost:8000/api/updateComment/${id}/`,
         {
@@ -122,7 +144,6 @@ export default function Page() {
       initializePageData();
     } catch (err) {
       const msg = (err as Error).message;
-
       console.error(msg);
       setError(msg);
     }
@@ -132,9 +153,9 @@ export default function Page() {
     if (!window.confirm("Are you sure you want to delete this comment?"))
       return;
 
-    if (accessLevel !== "delete") {
+    if (!access.can_delete) {
       setError("You do not have permission to delete a comment");
-      throw new Error("You do not have permission to delete a comment");
+      return;
     }
 
     try {
@@ -154,7 +175,6 @@ export default function Page() {
       initializePageData();
     } catch (err) {
       const msg = (err as Error).message;
-
       console.error(msg);
       setError(msg);
     }
@@ -165,6 +185,18 @@ export default function Page() {
       {page && (
         <>
           <div className="page-content">
+            <small style={{ color: "gray" }}>
+              Access:{" "}
+              {[
+                access.can_create ? "create" : null,
+                access.can_view ? "view" : null,
+                access.can_edit ? "edit" : null,
+                access.can_delete ? "delete" : null,
+              ]
+                .filter(Boolean)
+                .join(", ") || "No access"}
+            </small>
+
             <h1>{page.name}</h1>
             <p>{page.content}</p>
           </div>
@@ -178,6 +210,7 @@ export default function Page() {
             {page.comments.map((comment: any) => (
               <Comment
                 key={comment.id}
+                access={access}
                 date={new Date(comment.created_at).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -198,7 +231,7 @@ export default function Page() {
               />
             ))}
 
-            {accessLevel !== "view" && (
+            {(access.can_create || access.can_edit) && (
               <div className="add-comment-container">
                 <textarea
                   value={newComment}

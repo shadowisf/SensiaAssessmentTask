@@ -1,6 +1,8 @@
 import React from "react";
+import type { AccessLevel } from "../utils/types";
 
 type CommentProps = {
+  access: AccessLevel;
   date: string;
   author_name: string;
   content: string;
@@ -16,6 +18,7 @@ type CommentProps = {
 };
 
 export default function Comment({
+  access,
   date,
   author_name,
   content,
@@ -41,9 +44,10 @@ export default function Comment({
               value={editedContent}
               onChange={onChangeEditedContent}
               style={{ width: "100%" }}
+              disabled={!access.can_edit} // disable editing if no edit permission
             />
             <div className="comment-actions">
-              <a onClick={onSaveClick}>Save</a>
+              {access.can_edit && <a onClick={onSaveClick}>Save</a>}
               <a onClick={onCancelClick}>Cancel</a>
             </div>
           </>
@@ -51,8 +55,8 @@ export default function Comment({
           <>
             <p>{content}</p>
             <div className="comment-actions">
-              <a onClick={onEditClick}>Edit</a>
-              <a onClick={onDeleteClick}>Delete</a>
+              {access.can_edit && <a onClick={onEditClick}>Edit</a>}
+              {access.can_delete && <a onClick={onDeleteClick}>Delete</a>}
             </div>
           </>
         )}

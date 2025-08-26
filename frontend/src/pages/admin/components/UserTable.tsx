@@ -3,6 +3,7 @@ import ErrorMessage from "../../../components/ErrorMessage";
 import SuccessMessage from "../../../components/SuccessMessage";
 import Spinner from "../../../components/Spinner";
 import { createUser } from "../../../utils/UserCRUD";
+import type { AccessLevel } from "../../../utils/types";
 
 export default function UserTable() {
   const [users, setUsers] = useState<any[]>([]);
@@ -13,7 +14,9 @@ export default function UserTable() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isCreateMode, setIsCreateMode] = useState(false);
 
-  const [editedAccess, setEditedAccess] = useState<Record<string, string>>({});
+  const [editedAccess, setEditedAccess] = useState<Record<string, AccessLevel>>(
+    {}
+  );
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -48,67 +51,69 @@ export default function UserTable() {
       setAccess(accessData);
       setPages(pagesData);
       setError("");
-    } catch (error) {
-      setError((error as Error).message);
+    } catch (err) {
+      setError((err as Error).message);
     }
   }
 
   function getAccessLevelsForUser(userId: number) {
     const userAccess = access.filter((a: any) => a.user === userId);
 
-    if (userAccess.length === 0) {
-      return <p>No access.</p>;
-    }
+    // Filter out entries with no permissions
+    const filteredAccess = userAccess.filter(
+      (a: any) => a.can_create || a.can_view || a.can_edit || a.can_delete
+    );
+
+    if (filteredAccess.length === 0) return <p>No access.</p>;
 
     return (
-      <span>
-        {userAccess.map((a: any, idx: number) => (
-          <li
-            key={idx}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              paddingRight: "2rem",
-            }}
-          >
-            <span>{a.page_name}:</span> <span>{a.access_level}</span>
-          </li>
-        ))}
-      </span>
+      <div>
+        {filteredAccess.map((a: any) => {
+          const perms: string[] = [];
+          if (a.can_create) perms.push("create");
+          if (a.can_view) perms.push("view");
+          if (a.can_edit) perms.push("edit");
+          if (a.can_delete) perms.push("delete");
+
+          return (
+            <div key={a.id}>
+              <span>{a.page_name}:</span> <span>{perms.join(", ")}</span> <br />
+            </div>
+          );
+        })}
+      </div>
     );
   }
 
-  async function handleUpdateAccessLevel(
-    user_id: string,
-    slug: string,
-    newAccessLevel: string
-  ) {
-    const res = await fetch(
-      `http://localhost:8000/api/updateAccessLevel/${user_id}/${slug}/`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("access")}`,
+  const handleCheckboxChange =
+    (slug: string, field: keyof (typeof editedAccess)[string]) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEditedAccess((prev) => ({
+        ...prev,
+        [slug]: {
+          ...prev[slug],
+          [field]: e.target.checked,
         },
-        body: JSON.stringify({ access_level: newAccessLevel }),
-      }
-    );
-
-    if (!res.ok) throw new Error("Failed to update access level");
-  }
-
-  function handleChange(slug: string, newLevel: string) {
-    setEditedAccess((prev) => ({ ...prev, [slug]: newLevel }));
-  }
+      }));
+    };
 
   async function handleSave() {
     if (!selectedUser) return;
 
     try {
       await Promise.all(
-        Object.entries(editedAccess).map(([slug, level]) =>
-          handleUpdateAccessLevel(selectedUser.id, slug, level)
+        Object.entries(editedAccess).map(([slug, permissions]) =>
+          fetch(
+            `http://localhost:8000/api/updateAccessLevel/${selectedUser.id}/${slug}/`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${localStorage.getItem("access")}`,
+              },
+              body: JSON.stringify(permissions),
+            }
+          )
         )
       );
 
@@ -117,7 +122,6 @@ export default function UserTable() {
       fetchAllData();
     } catch (err) {
       const msg = (err as Error).message;
-
       console.error(msg);
       setError(msg);
     }
@@ -136,12 +140,27 @@ export default function UserTable() {
       fetchAllData();
     }
 
-    if (error) {
-      setCreateError(error);
-    }
+    if (error) setCreateError(error);
 
     setLoading(false);
   }
+
+  // Initialize editedAccess for all pages of selected user
+  const initializeEditedAccess = (user: any) => {
+    const newAccess: typeof editedAccess = {};
+    pages.forEach((page) => {
+      const entry = access.find(
+        (a) => a.user === user.id && a.page === page.id
+      );
+      newAccess[page.slug] = {
+        can_create: entry?.can_create ?? false,
+        can_view: entry?.can_view ?? false,
+        can_edit: entry?.can_edit ?? false,
+        can_delete: entry?.can_delete ?? false,
+      };
+    });
+    setEditedAccess(newAccess);
+  };
 
   return (
     <div className="user-table-container">
@@ -170,7 +189,7 @@ export default function UserTable() {
             <th>ID</th>
             <th>Email</th>
             <th>Full Name</th>
-            <th>Access Level</th>
+            <th>Permissions</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -192,7 +211,7 @@ export default function UserTable() {
                       setSelectedUser(user);
                       setDrawerOpen(true);
                       setIsCreateMode(false);
-                      setEditedAccess({});
+                      initializeEditedAccess(user);
                     }}
                   >
                     Edit
@@ -210,7 +229,7 @@ export default function UserTable() {
             <h2>
               {isCreateMode
                 ? "Create User"
-                : `Edit Access for ${selectedUser.full_name}`}
+                : `Edit Access for ${selectedUser?.full_name}`}
             </h2>
             <button onClick={() => setDrawerOpen(false)}>Close</button>
           </div>
@@ -225,10 +244,8 @@ export default function UserTable() {
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                 />
-
                 {createError && <ErrorMessage>{createError}</ErrorMessage>}
                 {success && <SuccessMessage>{success}</SuccessMessage>}
-
                 <button
                   onClick={handleCreateUser}
                   disabled={!newEmail || loading}
@@ -238,26 +255,56 @@ export default function UserTable() {
               </div>
             ) : (
               pages.map((page) => {
-                const entry = access.find(
-                  (a) => a.user === selectedUser.id && a.page === page.id
-                );
-                const current =
-                  editedAccess[page.slug] ?? entry?.access_level ?? "none";
+                const current = editedAccess[page.slug] || {
+                  can_create: false,
+                  can_view: false,
+                  can_edit: false,
+                  can_delete: false,
+                };
 
                 return (
                   <div key={page.id} className="access-row">
                     <label>{page.name}</label>
-                    <select
-                      value={current}
-                      onChange={(e) => handleChange(page.slug, e.target.value)}
-                    >
-                      <option value="all">all</option>
-                      <option value="create">create</option>
-                      <option value="view">view</option>
-                      <option value="edit">edit</option>
-                      <option value="delete">delete</option>
-                      <option value="none">none</option>
-                    </select>
+                    <div className="checkbox-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={current.can_create}
+                          onChange={handleCheckboxChange(
+                            page.slug,
+                            "can_create"
+                          )}
+                        />
+                        Create
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={current.can_view}
+                          onChange={handleCheckboxChange(page.slug, "can_view")}
+                        />
+                        View
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={current.can_edit}
+                          onChange={handleCheckboxChange(page.slug, "can_edit")}
+                        />
+                        Edit
+                      </label>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={current.can_delete}
+                          onChange={handleCheckboxChange(
+                            page.slug,
+                            "can_delete"
+                          )}
+                        />
+                        Delete
+                      </label>
+                    </div>
                   </div>
                 );
               })
