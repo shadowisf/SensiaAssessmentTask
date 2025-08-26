@@ -37,7 +37,7 @@ export default function Comment({
       <div className="bottom-container">
         {isEditing ? (
           <>
-            <input
+            <textarea
               value={editedContent}
               onChange={onChangeEditedContent}
               style={{ width: "100%" }}

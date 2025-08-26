@@ -178,7 +178,11 @@ export default function Page() {
             {page.comments.map((comment: any) => (
               <Comment
                 key={comment.id}
-                date={new Date(comment.created_at).toLocaleString()}
+                date={new Date(comment.created_at).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                })}
                 author_name={comment.author.full_name || "Anonymous"}
                 content={comment.content}
                 isEditing={editingCommentId === comment.id}
@@ -196,7 +200,7 @@ export default function Page() {
 
             {accessLevel !== "view" && (
               <div className="add-comment-container">
-                <input
+                <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment"
