@@ -61,7 +61,7 @@ export default function UserTable() {
     }
 
     return (
-      <ul>
+      <span>
         {userAccess.map((a: any, idx: number) => (
           <li
             key={idx}
@@ -74,7 +74,7 @@ export default function UserTable() {
             <span>{a.page_name}:</span> <span>{a.access_level}</span>
           </li>
         ))}
-      </ul>
+      </span>
     );
   }
 
@@ -233,7 +233,7 @@ export default function UserTable() {
                   onClick={handleCreateUser}
                   disabled={!newEmail || loading}
                 >
-                  Create
+                  Confirm
                 </button>
               </div>
             ) : (
@@ -269,7 +269,7 @@ export default function UserTable() {
                   onClick={handleSave}
                   disabled={Object.keys(editedAccess).length === 0}
                 >
-                  Save Changes
+                  Save
                 </button>
               </div>
             )}

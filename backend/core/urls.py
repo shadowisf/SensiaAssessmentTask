@@ -3,10 +3,11 @@ from . import views
 from rest_framework_simplejwt.views import (
     TokenRefreshView
 )
+from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
-    path('token/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/', csrf_exempt(views.CustomTokenObtainPairView.as_view()), name='token_obtain_pair'),
+    path('token/refresh/', csrf_exempt(TokenRefreshView.as_view()), name='token_refresh'),
     
     path('createUser/', views.CreateUserView.as_view(), name="create-user"),
     path("readAllUsers/", views.ReadAllUsersView.as_view(), name="read-all-users"),

@@ -50,7 +50,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=[
         ("admin", "Super Admin"),
         ("user", "Regular User")
-    ], default="user")
+    ], default="admin")
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]
