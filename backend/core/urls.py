@@ -13,7 +13,11 @@ urlpatterns = [
     path("readAllUsers/", views.ReadAllUsersView.as_view(), name="read-all-users"),
     path('readSelfUser/', views.ReadSelfUserView.as_view(), name="read-self-user"),
     path('updateSelfUser/', views.UpdateSelfUserView.as_view(), name="update-self-user"),
-    
+    path("updateFullName/", views.UpdateFullNameView.as_view(), name="update-fullname"),
+    path("requestOtp/", views.RequestOTPView.as_view(), name="request-otp"),
+    path("verifyOtp/", views.VerifyOTPView.as_view(), name="verify-otp"),
+    path("resetPassword/", views.ResetPasswordView.as_view(), name="reset-password"),
+
     path("readAllPages/", views.ReadAllPagesView.as_view(), name="read-all-pages"),
     path('readPage/<str:page_name>/', views.ReadPageView.as_view(), name="read-page"),
     

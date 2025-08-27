@@ -30,7 +30,8 @@ export default function UserLogin() {
       });
 
       if (!response.ok) {
-        throw new Error("Login failed");
+        const data = await response.json();
+        throw new Error(data.error || "Failed to login.");
       }
 
       const data = await response.json();

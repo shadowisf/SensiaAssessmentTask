@@ -21,14 +21,23 @@ class CustomUserManager(BaseUserManager):
         
         return self.create_user(email, password, **extra_fields)
 
+from django.utils import timezone
+from datetime import timedelta
+
 class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=100)
-    role = models.CharField(max_length=20, choices=[
-        ("admin", "Super Admin"),
-        ("user", "Regular User")
-    ], default="admin")
+    role = models.CharField(
+        max_length=20,
+        choices=[
+            ("admin", "Super Admin"),
+            ("user", "Regular User"),
+        ],
+        default="admin"
+    )
+    otp = models.CharField(max_length=6, blank=True, null=True)
+    otp_created_at = models.DateTimeField(blank=True, null=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["full_name"]
@@ -37,6 +46,20 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.email} ({self.role})"
+
+    def set_otp(self, otp: str):
+        """Save OTP and set creation timestamp"""
+        self.otp = otp
+        self.otp_created_at = timezone.now()
+        self.save(update_fields=["otp", "otp_created_at"])
+
+    def verify_otp(self, otp: str, expiry_minutes: int = 5) -> bool:
+        """Check OTP validity & expiry"""
+        if not self.otp or not self.otp_created_at:
+            return False
+        is_valid = self.otp == otp
+        not_expired = timezone.now() <= self.otp_created_at + timedelta(minutes=expiry_minutes)
+        return is_valid and not_expired
 
     
 class Page(models.Model):

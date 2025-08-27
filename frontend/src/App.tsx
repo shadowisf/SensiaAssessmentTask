@@ -8,6 +8,7 @@ import UserDashboard from "./pages/user/UserDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Page from "./pages/Page";
 import YouAreLost from "./pages/YouAreLost";
+import ResetPasswordForm from "./pages/reset-password/Form";
 
 export default function App() {
   return (
@@ -20,6 +21,8 @@ export default function App() {
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
+
+        <Route path="/reset-password" element={<ResetPasswordForm />} />
 
         <Route path="*" element={<YouAreLost />} />
 

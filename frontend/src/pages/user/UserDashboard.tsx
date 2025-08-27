@@ -3,6 +3,8 @@ import { readSelfUser } from "../../utils/UserCRUD";
 import { Link, useNavigate } from "react-router-dom";
 import ErrorMessage from "../../components/ErrorMessage";
 import { useAuth } from "../../context/AuthContext";
+
+import SuccessMessage from "../../components/SuccessMessage";
 import type { AccessLevel } from "../../utils/types";
 
 export default function UserDashboard() {
@@ -14,7 +16,10 @@ export default function UserDashboard() {
     {}
   );
   const [currentUser, setCurrentUser] = useState<any | null>(null);
+  const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+
+  const [newFullName, setNewFullName] = useState("");
 
   useEffect(() => {
     async function fetchSelfUser() {
@@ -26,6 +31,7 @@ export default function UserDashboard() {
       }
 
       setCurrentUser(data);
+      setNewFullName(data.full_name || "");
     }
 
     fetchSelfUser();
@@ -91,35 +97,94 @@ export default function UserDashboard() {
     );
   }
 
+  async function handleUpdateFullName() {
+    if (!newFullName.trim()) {
+      setError("Full name cannot be empty.");
+      return;
+    }
+
+    try {
+      setError("");
+      setSuccess("");
+
+      const token = localStorage.getItem("access");
+
+      const res = await fetch("http://localhost:8000/api/updateFullName/", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ full_name: newFullName }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || "Failed to update full name.");
+      }
+
+      const data = await res.json();
+      setSuccess(data.message);
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   return (
-    <main className="dashboard-wrapper">
-      <div className="pages-container">
-        <h1>Pages</h1>
+    <>
+      <main className="dashboard-wrapper">
+        <div className="user-profile-container">
+          <h1>User Profile</h1>
 
-        {error && <ErrorMessage>{error}</ErrorMessage>}
+          <div className="input-container">
+            <label>Full name</label>
+            <input
+              type="text"
+              value={newFullName}
+              onChange={(e) => setNewFullName(e.target.value)}
+            />
+          </div>
 
-        <div className="page-gallery">
-          {pages.map((page: any) => {
-            if (!hasAnyAccess(page.id)) return null;
+          {error ? (
+            <ErrorMessage>{error}</ErrorMessage>
+          ) : success ? (
+            <SuccessMessage>{success}</SuccessMessage>
+          ) : null}
 
-            const access = accessLevels[page.id];
-            const perms = [];
-            if (access.can_create) perms.push("Create");
-            if (access.can_view) perms.push("View");
-            if (access.can_edit) perms.push("Edit");
-            if (access.can_delete) perms.push("Delete");
-
-            return (
-              <div className="page" key={page.id}>
-                <Link to={`/page/${page.slug}`}>
-                  {page.name}
-                  <small>Access: {perms.join(", ")}</small>
-                </Link>
-              </div>
-            );
-          })}
+          <button onClick={handleUpdateFullName}>Update</button>
         </div>
-      </div>
-    </main>
+
+        <div className="pages-container">
+          <h1>Pages</h1>
+
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+
+          <div className="page-gallery">
+            {pages
+              .filter((page) => page && hasAnyAccess(page.id))
+              .map((page: any) => {
+                const access = accessLevels[page.id];
+                const perms = [];
+                if (access.can_create) perms.push("create");
+                if (access.can_view) perms.push("view");
+                if (access.can_edit) perms.push("edit");
+                if (access.can_delete) perms.push("delete");
+
+                return (
+                  <div className="page" key={page.id}>
+                    <Link to={`/page/${page.slug}`}>
+                      {page.name}
+                      <small>Access: {perms.join(", ")}</small>
+                    </Link>
+                  </div>
+                );
+              })}
+          </div>
+
+          {pages.filter((page) => page && hasAnyAccess(page.id)).length ===
+            0 && <p>No pages have been assigned to you yet.</p>}
+        </div>
+      </main>
+    </>
   );
 }

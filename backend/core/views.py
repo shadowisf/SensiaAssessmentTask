@@ -1,3 +1,4 @@
+import random
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -183,3 +184,109 @@ class UpdateAccessLevelView(APIView):
 
         serializer = UserAccessSerializer(access)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class UpdateFullNameView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request):
+        user = request.user
+        new_full_name = request.data.get("full_name", "").strip()
+
+        if not new_full_name:
+            return Response(
+                {"detail": "Full name cannot be empty."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.full_name = new_full_name
+        user.save(update_fields=["full_name"])
+
+        return Response(
+            {"message": "Full name updated successfully.", "full_name": user.full_name},
+            status=status.HTTP_200_OK
+        )
+        
+class RequestOTPView(APIView):
+    """
+    Step 1: User enters email → we check if it exists.
+    If yes, generate OTP and store it in the user model.
+    """
+    def post(self, request):
+        email = request.data.get("email")
+        if not email:
+            return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "User with this email does not exist"}, status=status.HTTP_404_NOT_FOUND)
+
+        otp = f"{random.randint(0, 999999):06d}"
+        user.otp = otp
+        user.otp_created_at = timezone.now()
+        user.save(update_fields=["otp", "otp_created_at"])
+
+        return Response(
+            {
+                "detail": "OTP sent successfully to your email",
+                "otp": otp,
+            },
+            status=status.HTTP_200_OK
+        )
+
+OTP_EXPIRY_MINUTES = 10
+
+class VerifyOTPView(APIView):
+    """
+    Step 2: User submits OTP → verify it.
+    """
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+
+        if not email or not otp:
+            return Response({"detail": "Email and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "Invalid email"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.otp or user.otp != otp:
+            return Response({"detail": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if timezone.now() > (user.otp_created_at + timezone.timedelta(minutes=OTP_EXPIRY_MINUTES)):
+            return Response({"detail": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": "OTP verified successfully"}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordView(APIView):
+    """
+    Step 3: User submits OTP + new password → reset password.
+    """
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+        new_password = request.data.get("new_password")
+
+        if not email or not otp or not new_password:
+            return Response({"detail": "Email, OTP, and new password are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"detail": "Invalid email"}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.otp or user.otp != otp:
+            return Response({"detail": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if timezone.now() > (user.otp_created_at + timezone.timedelta(minutes=OTP_EXPIRY_MINUTES)):
+            return Response({"detail": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.otp = None
+        user.otp_created_at = None
+        user.save(update_fields=["password", "otp", "otp_created_at"])
+
+        return Response({"detail": "Password reset successfully"}, status=status.HTTP_200_OK)
