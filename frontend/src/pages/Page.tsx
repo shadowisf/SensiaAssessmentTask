@@ -122,16 +122,9 @@ export default function Page() {
 
       setNewComment("");
 
-      if (!access.can_view) {
-        setError(
-          "Your comment has been posted, but you do not have permission to view other comments."
-        );
-      } else {
-        // Normal behavior: fetch updated page with all comments
-        const { data: userData } = await readSelfUser();
-        await fetchPageData(userData);
-        setError(""); // clear previous messages
-      }
+      const { data: userData } = await readSelfUser();
+      await fetchPageData(userData);
+      setError("");
     } catch (err) {
       setError((err as Error).message);
     }
@@ -254,7 +247,7 @@ export default function Page() {
                 />
               ))}
 
-            {access.can_create && (
+            {access.can_create && access.can_view && (
               <div className="add-comment-container">
                 <textarea
                   value={newComment}
