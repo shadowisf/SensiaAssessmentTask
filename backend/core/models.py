@@ -79,5 +79,18 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     history = models.JSONField(default=list, blank=True)
 
+    def add_history(self, user: User):
+        """
+        Add a new history entry. Call this before updating content.
+        """
+        entry = {
+            "user_id": user.id,
+            "user_name": user.get_full_name() or user.username,
+            "content": self.content,
+            "timestamp": self.updated_at.isoformat() if hasattr(self, "updated_at") else str(self.created_at),
+        }
+        self.history.append(entry)
+        self.save(update_fields=["history"])
+
     def __str__(self):
         return f"{self.author} on {self.page}"

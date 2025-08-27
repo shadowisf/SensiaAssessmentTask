@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import type { AccessLevel } from "../utils/types";
 
 type CommentProps = {
@@ -15,6 +15,8 @@ type CommentProps = {
   onDeleteClick?: () => void;
   onSaveClick?: () => void;
   onCancelClick?: () => void;
+  history?: { user_name: string; content: string; timestamp: string }[];
+  userRole?: string;
 };
 
 export default function Comment({
@@ -29,9 +31,20 @@ export default function Comment({
   onDeleteClick,
   onSaveClick,
   onCancelClick,
+  history = [],
+  userRole,
 }: CommentProps) {
+  const [showHistory, setShowHistory] = useState(false);
+
+  const showTooltip = userRole === "admin" && history.length > 0;
+
   return (
-    <div className="comment-container">
+    <div
+      className="comment-container"
+      onMouseEnter={() => showTooltip && setShowHistory(true)}
+      onMouseLeave={() => showTooltip && setShowHistory(false)}
+      style={{ position: "relative" }} // needed for tooltip positioning
+    >
       <div className="top-container">
         <span>{author_name}</span>
         <small>{date}</small>
@@ -60,6 +73,20 @@ export default function Comment({
           </>
         )}
       </div>
+
+      {showHistory && (
+        <div className="comment-history-tooltip">
+          <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
+            {history.map((entry, idx) => (
+              <li key={idx}>
+                <span>{entry.user_name}</span> at{" "}
+                {new Date(entry.timestamp).toLocaleString()}: {entry.content}
+                <br />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

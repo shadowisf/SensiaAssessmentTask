@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 from core.models import Page, Comment, User, UserPageAccess
 from core.serializers import CommentSerializer, CustomTokenObtainPairSerializer, PageSerializer, CreateUserSerializer, ReadUserSerializer, UpdateUserSerializer, UserAccessSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.utils import timezone
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -99,6 +100,15 @@ class UpdateCommentView(APIView):
                     {"detail": "You can only update your own comment."},
                     status=status.HTTP_403_FORBIDDEN,
                 )
+
+        if comment.content != request.data.get("content", comment.content):
+            comment.history.append({
+                "user_id": request.user.id,
+                "user_name": request.user.full_name,
+                "content": comment.content,
+                "timestamp": timezone.now().isoformat(),
+            })
+            comment.save(update_fields=["history"])
 
         serializer = CommentSerializer(comment, data=request.data, partial=True)
         if serializer.is_valid():

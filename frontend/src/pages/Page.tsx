@@ -23,8 +23,8 @@ export default function Page() {
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [error, setError] = useState("");
+  const [role, setRole] = useState("");
 
-  // Fetch current user and check authentication
   useEffect(() => {
     async function fetchSelfUserAndPage() {
       try {
@@ -58,6 +58,8 @@ export default function Page() {
       );
 
       if (!pageRes.ok) throw new Error("Failed to fetch page data");
+
+      setRole(userData.role);
 
       const pageData = await pageRes.json();
       setPage(pageData);
@@ -247,6 +249,8 @@ export default function Page() {
                   onDeleteClick={() => handleDeleteComment(comment.id)}
                   onSaveClick={() => handleUpdateComment(comment.id)}
                   onCancelClick={() => setEditingCommentId(null)}
+                  history={comment.history}
+                  userRole={role}
                 />
               ))}
 

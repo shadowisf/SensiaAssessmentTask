@@ -25,7 +25,7 @@ class CommentInline(admin.TabularInline):
     model = Comment
     extra = 0
     readonly_fields = ("created_at",)
-    fields = ("author", "content", "created_at")
+    fields = ("author", "content", "created_at", "history")
 
 
 class PageAdmin(admin.ModelAdmin):
@@ -37,6 +37,7 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ("id", "page", "author", "created_at")
     list_filter = ("page", "author")
     search_fields = ("content",)
+    readonly_fields = ("history",)
 
 
 class UserPageAccessAdmin(admin.ModelAdmin):
