@@ -97,7 +97,7 @@ class UserPageAccess(models.Model):
 
 class Comment(models.Model):
     page = models.ForeignKey(Page, related_name="comments", on_delete=models.CASCADE)
-    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    author = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     history = models.JSONField(default=list, blank=True)

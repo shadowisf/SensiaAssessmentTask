@@ -14,6 +14,7 @@ export default function ResetPasswordForm() {
 
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -35,15 +36,10 @@ export default function ResetPasswordForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Failed to send OTP");
 
-      // Send via EmailJS
       await emailjs.send(
         "service_ee6y6rw",
         "template_ycmbvsd",
-        {
-          otp: data.otp,
-          to_name: email,
-          to_email: email,
-        },
+        { otp: data.otp, to_name: email, to_email: email },
         { publicKey: "IQK6m6KVn2GfsEzlU" }
       );
 
@@ -97,22 +93,14 @@ export default function ResetPasswordForm() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Failed to reset password");
 
-      setSuccess(
-        "Password reset successfully. Redirecting you back to the login page."
-      );
-      setOtp("");
-      setNewPassword("");
-      setEmail("");
-      setOtpSent(false);
-      setOtpVerified(false);
+      setSubmitted(true); // <-- mark as submitted
+      setSuccess("Password reset successfully. Redirecting...");
     } catch (err: any) {
       setError(err.message);
+      setLoading(false); // allow retry if failed
     } finally {
-      setLoading(false);
-
-      setTimeout(() => {
-        navigate("/user-login");
-      }, 1500);
+      // redirect after 3s
+      setTimeout(() => navigate("/user-login"), 3000);
     }
   }
 
@@ -123,54 +111,49 @@ export default function ResetPasswordForm() {
         <div>
           <h1>Password Recovery</h1>
         </div>
-
-        <div className="input-container">
-          {/* Step 1 */}
-          <input
-            type="text"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={otpSent}
-          />
-
-          {/* Step 2 */}
-          {otpSent && (
+        {!submitted && (
+          <div className="input-container">
             <input
               type="text"
-              placeholder="Enter OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={otpSent}
             />
-          )}
 
-          {/* Step 3 */}
-          {otpVerified && (
-            <input
-              type="password"
-              placeholder="New Password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
-          )}
+            {otpSent && (
+              <input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+              />
+            )}
 
-          {error && <ErrorMessage>{error}</ErrorMessage>}
-          {success && <SuccessMessage>{success}</SuccessMessage>}
-        </div>
+            {otpVerified && (
+              <input
+                type="password"
+                placeholder="New Password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            )}
 
-        {!otpSent && (
+            {error && <ErrorMessage>{error}</ErrorMessage>}
+            {success && <SuccessMessage>{success}</SuccessMessage>}
+          </div>
+        )}
+        {!submitted && !otpSent && (
           <button onClick={handleSendOTP} disabled={!email}>
             Send OTP
           </button>
         )}
-
-        {otpSent && !otpVerified && (
+        {!submitted && otpSent && !otpVerified && (
           <button onClick={handleVerifyOTP} disabled={!otp}>
             Verify OTP
           </button>
         )}
-
-        {otpVerified && (
+        {!submitted && otpVerified && (
           <button
             onClick={handleResetPassword}
             disabled={!newPassword || newPassword.length < 6}
@@ -178,6 +161,7 @@ export default function ResetPasswordForm() {
             Reset Password
           </button>
         )}
+        {submitted && <Spinner />} {/* spinner until redirect */}
       </main>
     </>
   );
