@@ -262,10 +262,9 @@ export default function Page() {
               </div>
             )}
 
-            {!access.can_view && access.can_create && (
+            {!access.can_view && (
               <p style={{ color: "gray" }}>
-                You can post comments, but you do not have permission to view
-                comments.
+                You do not have permission to view comments on this page.
               </p>
             )}
           </div>

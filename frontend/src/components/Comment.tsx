@@ -44,7 +44,6 @@ export default function Comment({
               value={editedContent}
               onChange={onChangeEditedContent}
               style={{ width: "100%" }}
-              disabled={!access.can_edit} // disable editing if no edit permission
             />
             <div className="comment-actions">
               {access.can_edit && <a onClick={onSaveClick}>Save</a>}
