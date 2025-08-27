@@ -21,28 +21,6 @@ class CustomUserManager(BaseUserManager):
         
         return self.create_user(email, password, **extra_fields)
 
-DEFAULT_PAGE_ACCESS = {
-    "Products List": "none",
-    "Marketing List": "none",
-    "Order List": "none",
-    "Media Plans": "none",
-    "Offer Pricing SKUs": "none",
-    "Clients": "none",
-    "Suppliers": "none",
-    "Customer Support": "none",
-    "Sales Reports": "none",
-    "Finance & Accounting": "none"
-}
-
-ACCESS_CHOICES = [
-    ('all', 'all'),
-    ('create', 'create'),
-    ('view', 'View'),
-    ('edit', 'Edit'),
-    ('delete', 'Delete'),
-    ('none', 'None'),
-]
-
 class User(AbstractUser):
     username = None
     email = models.EmailField(unique=True)
