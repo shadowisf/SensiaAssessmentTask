@@ -4,9 +4,11 @@ import Comment from "../components/Comment";
 import ErrorMessage from "../components/ErrorMessage";
 import { useAuth } from "../context/AuthContext";
 import type { AccessLevel } from "../utils/types";
+import { readSelfUser } from "../utils/UserCRUD";
 
 export default function Page() {
   const navigate = useNavigate();
+
   const { pageName } = useParams();
   const { isAuthenticated, authInitialized } = useAuth();
 
@@ -22,37 +24,45 @@ export default function Page() {
   const [editedContent, setEditedContent] = useState("");
   const [error, setError] = useState("");
 
+  // Fetch current user and check authentication
   useEffect(() => {
-    if (authInitialized && !isAuthenticated) {
-      navigate("/");
+    async function fetchSelfUserAndPage() {
+      try {
+        const { data: userData } = await readSelfUser();
+
+        if (!userData || (authInitialized && !isAuthenticated)) {
+          navigate("/");
+          return;
+        }
+
+        await fetchPageData(userData);
+      } catch (err) {
+        const msg = (err as Error).message || "Failed to initialize page";
+        console.error(msg);
+        setError(msg);
+      }
     }
-  }, [authInitialized, isAuthenticated]);
 
-  useEffect(() => {
-    initializePageData();
-  }, []);
+    if (authInitialized) fetchSelfUserAndPage();
+  }, [authInitialized, isAuthenticated, pageName]);
 
-  async function initializePageData() {
+  async function fetchPageData(userData: any) {
     try {
       const headers = {
         Authorization: `Bearer ${localStorage.getItem("access")}`,
       };
 
-      const [userRes, pageRes] = await Promise.all([
-        fetch("http://localhost:8000/api/readSelfUser/", { headers }),
-        fetch(`http://localhost:8000/api/readPage/${pageName}/`, { headers }),
-      ]);
+      const pageRes = await fetch(
+        `http://localhost:8000/api/readPage/${pageName}/`,
+        { headers }
+      );
 
-      if (!userRes.ok || !pageRes.ok) {
-        throw new Error("Failed to fetch user or page data");
-      }
+      if (!pageRes.ok) throw new Error("Failed to fetch page data");
 
-      const userData = await userRes.json();
       const pageData = await pageRes.json();
       setPage(pageData);
 
       if (userData.role === "admin") {
-        // Admin: full permissions
         setAccess({
           can_create: true,
           can_view: true,
@@ -60,7 +70,6 @@ export default function Page() {
           can_delete: true,
         });
       } else {
-        // Normal user: fetch specific permissions
         const accessRes = await fetch(
           "http://localhost:8000/api/readAllPageAccess/",
           { headers }
@@ -68,7 +77,6 @@ export default function Page() {
         if (!accessRes.ok) throw new Error("Failed to fetch access levels");
 
         const accessData = await accessRes.json();
-
         const match = accessData.find(
           (entry: any) =>
             entry.user === userData.id && entry.page_name === pageData.name
@@ -82,9 +90,10 @@ export default function Page() {
         });
       }
     } catch (err) {
-      const msg = (err as Error).message;
+      const msg = (err as Error).message || "Failed to fetch page";
       console.error(msg);
       setError(msg);
+      setPage(null);
     }
   }
 
@@ -110,19 +119,24 @@ export default function Page() {
       if (!res.ok) throw new Error("Failed to create comment");
 
       setNewComment("");
-      initializePageData();
+
+      if (!access.can_view) {
+        setError(
+          "Your comment has been posted, but you do not have permission to view other comments."
+        );
+      } else {
+        // Normal behavior: fetch updated page with all comments
+        const { data: userData } = await readSelfUser();
+        await fetchPageData(userData);
+        setError(""); // clear previous messages
+      }
     } catch (err) {
-      const msg = (err as Error).message;
-      console.error(msg);
-      setError(msg);
+      setError((err as Error).message);
     }
   }
 
   async function handleUpdateComment(id: number) {
-    if (!access.can_edit) {
-      setError("You do not have permission to edit a comment");
-      return;
-    }
+    if (!access.can_edit) return setError("No permission to edit comment");
 
     try {
       const res = await fetch(
@@ -136,32 +150,25 @@ export default function Page() {
           body: JSON.stringify({ content: editedContent }),
         }
       );
-
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
-        const message =
-          errorData?.detail || errorData?.error || "Failed to delete comment.";
-        throw new Error(message);
+        throw new Error(errorData?.detail || "Failed to update comment");
       }
 
       setEditingCommentId(null);
       setEditedContent("");
-      initializePageData();
+      const { data: userData } = await readSelfUser();
+      await fetchPageData(userData);
     } catch (err) {
-      const msg = (err as Error).message;
-      console.error(msg);
-      setError(msg);
+      setError((err as Error).message);
     }
   }
 
   async function handleDeleteComment(id: number) {
+    if (!access.can_delete) return setError("No permission to delete comment");
+
     if (!window.confirm("Are you sure you want to delete this comment?"))
       return;
-
-    if (!access.can_delete) {
-      setError("You do not have permission to delete a comment");
-      return;
-    }
 
     try {
       const res = await fetch(
@@ -174,25 +181,21 @@ export default function Page() {
           },
         }
       );
-
       if (!res.ok) {
         const errorData = await res.json().catch(() => null);
-        const message =
-          errorData?.detail || errorData?.error || "Failed to delete comment.";
-        throw new Error(message);
+        throw new Error(errorData?.detail || "Failed to update comment");
       }
 
-      initializePageData();
+      const { data: userData } = await readSelfUser();
+      await fetchPageData(userData);
     } catch (err) {
-      const msg = (err as Error).message;
-      console.error(msg);
-      setError(msg);
+      setError((err as Error).message);
     }
   }
 
   return (
     <main className="page-wrapper">
-      {page && (
+      {page ? (
         <>
           <div className="page-content">
             <small style={{ color: "gray" }}>
@@ -215,33 +218,39 @@ export default function Page() {
             <h2>Comments</h2>
 
             {error && <ErrorMessage>{error}</ErrorMessage>}
-            {page.comments.length === 0 && <p>No comments yet.</p>}
 
-            {page.comments.map((comment: any) => (
-              <Comment
-                key={comment.id}
-                access={access}
-                date={new Date(comment.created_at).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: true,
-                })}
-                author_name={comment.author.full_name || "Anonymous"}
-                content={comment.content}
-                isEditing={editingCommentId === comment.id}
-                editedContent={editedContent}
-                onChangeEditedContent={(e) => setEditedContent(e.target.value)}
-                onEditClick={() => {
-                  setEditingCommentId(comment.id);
-                  setEditedContent(comment.content);
-                }}
-                onDeleteClick={() => handleDeleteComment(comment.id)}
-                onSaveClick={() => handleUpdateComment(comment.id)}
-                onCancelClick={() => setEditingCommentId(null)}
-              />
-            ))}
+            {access.can_view && page.comments?.length === 0 && (
+              <p>No comments yet.</p>
+            )}
 
-            {(access.can_create || access.can_edit) && (
+            {access.can_view &&
+              page.comments?.map((comment: any) => (
+                <Comment
+                  key={comment.id}
+                  access={access}
+                  date={new Date(comment.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                  author_name={comment.author.full_name || "Anonymous"}
+                  content={comment.content}
+                  isEditing={editingCommentId === comment.id}
+                  editedContent={editedContent}
+                  onChangeEditedContent={(e) =>
+                    setEditedContent(e.target.value)
+                  }
+                  onEditClick={() => {
+                    setEditingCommentId(comment.id);
+                    setEditedContent(comment.content);
+                  }}
+                  onDeleteClick={() => handleDeleteComment(comment.id)}
+                  onSaveClick={() => handleUpdateComment(comment.id)}
+                  onCancelClick={() => setEditingCommentId(null)}
+                />
+              ))}
+
+            {access.can_create && (
               <div className="add-comment-container">
                 <textarea
                   value={newComment}
@@ -252,8 +261,17 @@ export default function Page() {
                 <button onClick={handleCreateComment}>Post Comment</button>
               </div>
             )}
+
+            {!access.can_view && access.can_create && (
+              <p style={{ color: "gray" }}>
+                You can post comments, but you do not have permission to view
+                comments.
+              </p>
+            )}
           </div>
         </>
+      ) : (
+        error && <ErrorMessage>{error}</ErrorMessage>
       )}
     </main>
   );

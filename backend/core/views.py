@@ -93,21 +93,24 @@ class UpdateCommentView(APIView):
     def put(self, request, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
 
-        if not request.user.is_staff and comment.author != request.user:
-            return Response(
-                {"detail": "You can only update your own comment."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if getattr(request.user, "role", None) != "admin":
+            if comment.author != request.user:
+                return Response(
+                    {"detail": "You can only update your own comment."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         serializer = CommentSerializer(comment, data=request.data, partial=True)
-
         if serializer.is_valid():
             serializer.save()
             return Response(
-                {"message": "Comment updated successfully"}, status=status.HTTP_200_OK
+                {"message": "Comment updated successfully"},
+                status=status.HTTP_200_OK
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class DeleteCommentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -115,11 +118,12 @@ class DeleteCommentView(APIView):
     def delete(self, request, comment_id):
         comment = get_object_or_404(Comment, id=comment_id)
 
-        if not request.user.is_staff and comment.author != request.user:
-            return Response(
-                {"detail": "You can only delete your own comment."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        if getattr(request.user, "role", None) != "admin":
+            if comment.author != request.user:
+                return Response(
+                    {"detail": "You can only delete your own comment."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         comment.delete()
         return Response(

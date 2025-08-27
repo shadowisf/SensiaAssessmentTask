@@ -87,11 +87,6 @@ textarea {
   outline: none;
 }
 
-textarea {
-  width: 50%;
-  resize: vertical;
-}
-
 nav {
   position: fixed;
   top: 0;
@@ -248,6 +243,11 @@ nav {
       display: flex;
       flex-direction: column;
       gap: 10px;
+
+      textarea {
+        width: 400px;
+        resize: vertical;
+      }
     }
   }
 }
